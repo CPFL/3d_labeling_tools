@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - PCD</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000000;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+
+			}
+
+			a { color: #d14826 }
+			.button { background:#999; color:#eee; padding:0.2em 0.5em; cursor:pointer }
+			.highlight { background:orange; color:#fff; }
+
+			span {
+				display: inline-block;
+				width: 60px;
+				float: left;
+				text-align: center;
+			}
+
+		</style>
+	</head>
+	<body>
+		<script src="three.js"></script>
+		<script src="PCDLoader.js"></script>
+		<script src="OrbitControls.js"></script>
+		<script src="Detector.js"></script>
+		<script src="stats.min.js"></script>
+		<script src='DAT.GUI.min.js'></script>
+		<script src='KeyboardState.js'></script>
+
+
+		<script>
+
+		  	dat.GUI.prototype.removeFolder = function(name) {
+    			var folder = this.__folders[name];
+    			if (!folder) {
+    			  return;
+    			}
+	    		folder.close();
+	    		this.__ul.removeChild(folder.domElement.parentNode);
+	    		delete this.__folders[name];
+	    		this.onResize();
+  			}
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats;
+			var camera, controls, scene, renderer;
+			var cube;
+			var keyboard = new THREEx.KeyboardState();
+			var gui;
+
+			init();
+			animate();
+			function init() {
+
+				scene = new THREE.Scene();
+
+				var axisHelper = new THREE.AxisHelper( 0.1 );
+				axisHelper.position.set(0,0,0);
+				scene.add( axisHelper );
+
+				camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 0.01, 10000 );
+				camera.position.set(0,0,0.5);
+				camera.up.set(0,0,1);
+
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setClearColor( 0x000000 );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				controls = new THREE.OrbitControls( camera,renderer.domElement );
+
+				controls.rotateSpeed = 2.0;
+				controls.zoomSpeed = 0.3;
+				controls.panSpeed = 0.2;
+
+				controls.noZoom = false;
+				controls.noPan = false;
+
+				controls.staticMoving = true;
+				controls.dynamicDampingFactor = 0.3;
+
+				controls.minDistance = 0.3;
+				controls.maxDistance = 0.3 * 100;
+				scene.add( camera );
+
+				var input_filename = 'input'
+				var now_flame = '000000'
+
+				var loader = new THREE.PCDLoader();
+				loader.load( input_filename + '/PCDPoints/' + now_flame + '/all.pcd', function ( mesh ) {
+
+					scene.add( mesh );
+					var center = mesh.geometry.boundingSphere.center;
+					controls.target.set( 1, 0, 0);
+					controls.update();
+
+				});
+
+
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+				container.appendChild( renderer.domElement );
+
+				stats = new Stats();
+				container.appendChild( stats.dom );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				var gui = new dat.GUI();
+
+				var cube_array = [];
+				var each_cube_parameters = [];
+				var read_cube_parameters = [];
+				var bb1 = []
+
+				var parameters =
+				{
+					addbboxpara: function() { addbbox_initial(gui,parameters,cube_array,each_cube_parameters,read_cube_parameters,bb1);},i : -1
+				};
+
+				gui.add( parameters, 'addbboxpara' ).name("AddBoundingBox");
+
+				readTextFile(input_filename + '/Annotations/' + now_flame + '.txt',gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1);
+
+				gui.open();
+
+
+			}
+
+			function readTextFile(file,gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1){
+			    var rawFile = new XMLHttpRequest();
+			    rawFile.open("GET", file, false);
+    			rawFile.onreadystatechange = function (){
+
+		        if(rawFile.readyState === 4){
+
+            		if(rawFile.status === 200 || rawFile.status == 0){
+
+                		var allText = rawFile.responseText;
+                		for (var i = 0 ; i < allText.split("\n").length;i++){
+                			if(allText.split("\n")[i].split(",").length==15){
+	                			addbbox_read(allText.split("\n")[i],gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1);
+                				}
+                		    }
+            			}
+        			}
+    			}
+    			rawFile.send(null);
+			}
+
+
+			function addbbox_read(str,gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1){
+				var readfile_parameters =
+				{
+					x: parseFloat(str.split(",")[13])+0.87, y: -parseFloat(str.split(",")[11])+0.15, z:-parseFloat(str.split(",")[12])-0.3,
+					width: parseFloat(str.split(",")[8]), height: parseFloat(str.split(",")[9]), depth: parseFloat(str.split(",")[10]) 
+				};
+
+
+      			addbbox_count(gui,parameters,cube_array,each_cube_parameters,readfile_parameters,read_cube_parameters,bb1);
+
+				}
+
+			function addbbox_initial(gui, parameters,cube_array,each_cube_parameters,read_cube_parameters,bb1)
+			{
+
+				var init_parameters =
+				{
+					x: 1, y: 0, z: -1,
+					width: 0.5, height: 0.5, depth: 0.5
+				};
+
+
+				addbbox_count(gui,parameters,cube_array,each_cube_parameters,init_parameters,read_cube_parameters,bb1);
+
+			}
+
+
+			function addbbox_count(gui, parameters,cube_array,each_cube_parameters,read_parameters,read_cube_parameters,bb1)
+			{
+
+				each_cube_parameters.push(read_parameters);
+
+				var tmp_parameters =
+				{
+					x: read_parameters.x, y: read_parameters.y, z:read_parameters.z,
+					width: read_parameters.width, height: read_parameters.height, depth: read_parameters.depth
+				};
+				read_cube_parameters.push(tmp_parameters);
+
+				parameters.i = 1 + parameters.i;
+
+				addbbox(gui,parameters.i,cube_array,each_cube_parameters,read_cube_parameters,bb1);
+
+			}
+
+			function addbbox(gui,num,cube_array,each_cube_parameters,read_cube_parameters,bb1)
+			{
+
+
+				var cubeGeometry = new THREE.CubeGeometry(1.0,1.0,1.0);
+				var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0x008866, wireframe:true } );
+				cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
+				cube.position.set(each_cube_parameters[num].x,each_cube_parameters[num].y,each_cube_parameters[num].z);
+				cube.scale.set(each_cube_parameters[num].width, each_cube_parameters[num].height , each_cube_parameters[num].depth);
+				scene.add(cube);
+				cube_array.push(cube);
+				addbbox_gui(gui,num,cube_array,each_cube_parameters,read_cube_parameters,bb1);
+
+
+			}
+
+			function addbbox_gui(gui,num,cube_array,each_cube_parameters,read_cube_parameters,bb1)
+			{
+
+				var bb = gui.addFolder('BoundingBox'+String(num));
+				bb1.push(bb);
+
+				var folder1 = bb1[num].addFolder('Position');
+				var cubeX = folder1.add( each_cube_parameters[num], 'x' ).min(0).max(50).step(0.01).listen();
+				var cubeY = folder1.add( each_cube_parameters[num], 'y' ).min(-30).max(30).step(0.01).listen();
+				var cubeZ = folder1.add( each_cube_parameters[num], 'z' ).min(-3).max(10).step(0.01).listen();
+				folder1.close();
+
+				var folder2 = bb1[num].addFolder('Size');
+				var cubeW = folder2.add( each_cube_parameters[num], 'width' ).min(0).max(10).step(0.01).listen();
+				var cubeH = folder2.add( each_cube_parameters[num], 'height' ).min(0).max(10).step(0.01).listen();
+				var cubeD = folder2.add( each_cube_parameters[num], 'depth' ).min(0).max(10).step(0.01).listen();
+				folder2.close();
+
+
+				cubeX.onChange(function(value) 
+				{   cube_array[num].position.x = value;   });
+				cubeY.onChange(function(value) 
+				{   cube_array[num].position.y = -value;   });
+				cubeZ.onChange(function(value) 
+				{   cube_array[num].position.z = value;   });
+
+				cubeW.onChange(function(value) 
+				{   cube_array[num].scale.x = value;   });
+				cubeH.onChange(function(value) 
+				{   cube_array[num].scale.y = value;   });
+				cubeD.onChange(function(value) 
+				{   cube_array[num].scale.z = value;   });
+
+
+				var reset_parameters =
+				{
+					reset: function() { resetCube(num,cube_array,each_cube_parameters,read_cube_parameters); },
+					delete: function (){ gui.removeFolder('BoundingBox'+String(num)); cube_array[num].visible=false;}
+				};
+
+				bb1[num].add(reset_parameters, 'reset' ).name("Reset");
+				d = bb1[num].add(reset_parameters, 'delete' ).name("Delete");
+
+
+
+			}
+
+
+			function updateCube(num,cube_array,each_cube_parameters)
+			{
+				cube_array[num].position.x = each_cube_parameters[num].x;
+				cube_array[num].position.y = -each_cube_parameters[num].y;
+				cube_array[num].position.z = each_cube_parameters[num].z;
+				cube_array[num].scale.x = each_cube_parameters[num].width;
+				cube_array[num].scale.y = each_cube_parameters[num].height;
+				cube_array[num].scale.z = each_cube_parameters[num].depth;
+			}
+
+
+			function resetCube(num,cube_array,each_cube_parameters,read_cube_parameters)
+			{
+
+				each_cube_parameters[num].x = read_cube_parameters[num].x;
+				each_cube_parameters[num].y = read_cube_parameters[num].y;
+				each_cube_parameters[num].z = read_cube_parameters[num].z;
+				each_cube_parameters[num].width = read_cube_parameters[num].width;
+				each_cube_parameters[num].height = read_cube_parameters[num].height;
+				each_cube_parameters[num].depth = read_cube_parameters[num].depth;
+
+				updateCube(num,cube_array,each_cube_parameters);
+			}
+
+
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				controls.handleResize();
+
+			}
+
+
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				controls.update();
+				renderer.render( scene, camera );
+				stats.update();
+
+			}
+
+		</script>
+	</body>
+</html>
