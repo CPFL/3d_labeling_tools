@@ -138,9 +138,11 @@
 				var parameters =
 				{
 					addbboxpara: function() { addbbox_initial(gui,parameters,cube_array,each_cube_parameters,read_cube_parameters,bb1);},i : -1
+					//,result: function() {result(1,cube_array);}
 				};
 
 				gui.add( parameters, 'addbboxpara' ).name("AddBoundingBox");
+				//gui.add(parameters,'result').name("result");
 
 				readTextFile(input_filename + '/Annotations/' + now_flame + '.txt',gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1);
 
@@ -325,6 +327,17 @@
 				stats.update();
 
 			}
+
+			function result(num, cube_array) {
+				alert(cube_array[num].position.x)
+				alert(cube_array[num].position.y)
+				alert(cube_array[num].position.z)
+				alert(cube_array[num].scale.x)
+				alert(cube_array[num].scale.y)
+				alert(cube_array[num].scale.z)
+			}
+
+
 
 		</script>
 	</body>
