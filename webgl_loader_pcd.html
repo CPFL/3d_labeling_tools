@@ -64,8 +64,17 @@
 			var container, stats;
 			var camera, controls, scene, renderer;
 			var cube;
-			var keyboard = new THREEx.KeyboardState();
-			var gui;
+			var keyboard	= new KeyboardState();
+			var numbertag_list = [];
+			var gui_tag = [];
+			var calibrate_pram = [0.87,-0.15,-0.3];
+			var gui = new dat.GUI();
+
+
+			var cube_array = [];
+			var each_cube_parameters = [];
+			var read_cube_parameters = [];
+			var bb1 = []
 
 			init();
 			animate();
@@ -96,12 +105,18 @@
 
 				controls.noZoom = false;
 				controls.noPan = false;
+				controls.noRotate = false;
 
 				controls.staticMoving = true;
 				controls.dynamicDampingFactor = 0.3;
 
 				controls.minDistance = 0.3;
 				controls.maxDistance = 0.3 * 100;
+
+				controls.noKey = true;
+
+				controls.enabled = false;
+
 				scene.add( camera );
 
 				var input_filename = 'input'
@@ -117,8 +132,6 @@
 
 				});
 
-
-
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
 				container.appendChild( renderer.domElement );
@@ -128,16 +141,11 @@
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
-				var gui = new dat.GUI();
-
-				var cube_array = [];
-				var each_cube_parameters = [];
-				var read_cube_parameters = [];
-				var bb1 = []
 
 				var parameters =
 				{
-					addbboxpara: function() { addbbox_initial(gui,parameters,cube_array,each_cube_parameters,read_cube_parameters,bb1);},i : -1
+					addbboxpara: function() { addbbox_initial(gui,parameters,cube_array,each_cube_parameters,read_cube_parameters,bb1); 
+						gui_reset_tag(bb1,each_cube_parameters);},i : -1
 					//,result: function() {result(1,cube_array);}
 				};
 
@@ -147,6 +155,8 @@
 				readTextFile(input_filename + '/Annotations/' + now_flame + '.txt',gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1);
 
 				gui.open();
+
+				gui_add_tag(bb1,each_cube_parameters);
 
 
 			}
@@ -176,8 +186,8 @@
 			function addbbox_read(str,gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1){
 				var readfile_parameters =
 				{
-					x: parseFloat(str.split(",")[13])+0.87, y: -parseFloat(str.split(",")[11])+0.15, z:-parseFloat(str.split(",")[12])-0.3,
-					width: parseFloat(str.split(",")[8]), height: parseFloat(str.split(",")[9]), depth: parseFloat(str.split(",")[10]) 
+					x: parseFloat(str.split(",")[13])+calibrate_pram[0], y: parseFloat(str.split(",")[11])+calibrate_pram[1], z:-parseFloat(str.split(",")[12])+calibrate_pram[2],
+					width: parseFloat(str.split(",")[8]), height: parseFloat(str.split(",")[9]), depth: parseFloat(str.split(",")[10]) ,numbertag:parameters.i+1
 				};
 
 
@@ -191,7 +201,7 @@
 				var init_parameters =
 				{
 					x: 1, y: 0, z: -1,
-					width: 0.5, height: 0.5, depth: 0.5
+					width: 0.5, height: 0.5, depth: 0.5 ,numbertag:parameters.i+1
 				};
 
 
@@ -208,7 +218,7 @@
 				var tmp_parameters =
 				{
 					x: read_parameters.x, y: read_parameters.y, z:read_parameters.z,
-					width: read_parameters.width, height: read_parameters.height, depth: read_parameters.depth
+					width: read_parameters.width, height: read_parameters.height, depth: read_parameters.depth ,numbertag:read_parameters.numbertag
 				};
 				read_cube_parameters.push(tmp_parameters);
 
@@ -225,7 +235,7 @@
 				var cubeGeometry = new THREE.CubeGeometry(1.0,1.0,1.0);
 				var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0x008866, wireframe:true } );
 				cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
-				cube.position.set(each_cube_parameters[num].x,each_cube_parameters[num].y,each_cube_parameters[num].z);
+				cube.position.set(each_cube_parameters[num].x,-each_cube_parameters[num].y,each_cube_parameters[num].z);
 				cube.scale.set(each_cube_parameters[num].width, each_cube_parameters[num].height , each_cube_parameters[num].depth);
 				scene.add(cube);
 				cube_array.push(cube);
@@ -273,12 +283,29 @@
 					reset: function() { resetCube(num,cube_array,each_cube_parameters,read_cube_parameters); },
 					delete: function (){ gui.removeFolder('BoundingBox'+String(num)); cube_array[num].visible=false;}
 				};
+				numbertag_list.push(num);
 
 				bb1[num].add(reset_parameters, 'reset' ).name("Reset");
 				d = bb1[num].add(reset_parameters, 'delete' ).name("Delete");
 
+			}
 
+			function gui_add_tag(bb1,each_cube_parameters){
+				for (var i = 0 ; i < numbertag_list.length; i++){
+					tag = bb1[i].add( each_cube_parameters[i], 'numbertag' ,numbertag_list).name("BoundingBoxTag").onChange( gui_add_tag );
+					gui_tag.push(tag)
+				}
+			}
 
+			function gui_reset_tag(bb1,each_cube_parameters){
+				for (var i = 0 ; i < numbertag_list.length-1; i++){
+					bb1[i].remove(gui_tag[i]);
+				}
+				gui_tag = [];
+				for (var i = 0 ; i < numbertag_list.length; i++){
+					tag = bb1[i].add( each_cube_parameters[i], 'numbertag' ,numbertag_list).name("BoundingBoxTag").onChange( gui_add_tag );
+					gui_tag.push(tag)
+				}
 			}
 
 
@@ -322,19 +349,37 @@
 			function animate() {
 
 				requestAnimationFrame( animate );
-				controls.update();
 				renderer.render( scene, camera );
+				update();
+				change_color();
+			}
+
+
+			function update(){
+				keyboard.update();
+				if ( keyboard.down("shift") ) controls.enabled = true;
+				if ( keyboard.up("shift") ) controls.enabled = false;
+				controls.update();
 				stats.update();
 
 			}
-
-			function result(num, cube_array) {
-				alert(cube_array[num].position.x)
-				alert(cube_array[num].position.y)
-				alert(cube_array[num].position.z)
-				alert(cube_array[num].scale.x)
-				alert(cube_array[num].scale.y)
-				alert(cube_array[num].scale.z)
+			function change_color(){
+				for (var i = 0 ; i < numbertag_list.length; i++){
+				if(bb1[i].closed==false){
+					cube_array[i].material.color.setHex( 0xff0000 );
+				}
+				if(bb1[i].closed==true){
+					cube_array[i].material.color.setHex( 0x008866 );
+				}}
+			}
+			function result(num, cube_array, each_cube_parameters) {
+				alert(each_cube_parameters[num].numbertag) //BoundingBox Tag
+				alert(-cube_array[num].position.y-calibrate_pram[1])//position.x
+				alert(-cube_array[num].position.z+calibrate_pram[2])//position.y
+				alert(cube_array[num].position.x-calibrate_pram[0])//position.z
+				alert(cube_array[num].scale.x)//scale.x
+				alert(cube_array[num].scale.y)//scale.y
+				alert(cube_array[num].scale.z)//scale.z
 			}
 
 
