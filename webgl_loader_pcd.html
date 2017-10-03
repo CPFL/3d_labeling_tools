@@ -37,13 +37,13 @@
 		</style>
 	</head>
 	<body>
-		<script src="three.js"></script>
-		<script src="PCDLoader.js"></script>
-		<script src="OrbitControls.js"></script>
-		<script src="Detector.js"></script>
-		<script src="stats.min.js"></script>
-		<script src='DAT.GUI.min.js'></script>
-		<script src='KeyboardState.js'></script>
+		<script src="js/three.min.js"></script>
+		<script src="js/PCDLoader.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/stats.min.js"></script>
+		<script src='js/DAT.GUI.min.js'></script>
+		<script src='js/KeyboardState.js'></script>
 
 
 		<script>
@@ -186,7 +186,7 @@
 			function addbbox_read(str,gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1){
 				var readfile_parameters =
 				{
-					x: parseFloat(str.split(",")[13])+calibrate_pram[0], y: parseFloat(str.split(",")[11])+calibrate_pram[1], z:-parseFloat(str.split(",")[12])+calibrate_pram[2],
+					x: parseFloat(str.split(",")[13])+calibrate_pram[0], y: parseFloat(str.split(",")[11])+calibrate_pram[1], z:-parseFloat(str.split(",")[12])+calibrate_pram[2], delta_x:0, delta_y:0, delta_z:0,
 					width: parseFloat(str.split(",")[8]), height: parseFloat(str.split(",")[9]), depth: parseFloat(str.split(",")[10]) ,numbertag:parameters.i+1
 				};
 
@@ -200,7 +200,7 @@
 
 				var init_parameters =
 				{
-					x: 1, y: 0, z: -1,
+					x: 1, y: 0, z: -1, delta_x:0, delta_y:0, delta_z:0,
 					width: 0.5, height: 0.5, depth: 0.5 ,numbertag:parameters.i+1
 				};
 
@@ -217,7 +217,7 @@
 
 				var tmp_parameters =
 				{
-					x: read_parameters.x, y: read_parameters.y, z:read_parameters.z,
+					x: read_parameters.x, y: read_parameters.y, z:read_parameters.z,  delta_x:read_parameters.delta_x, delta_y:read_parameters.delta_y, delta_z:read_parameters.delta_z,
 					width: read_parameters.width, height: read_parameters.height, depth: read_parameters.depth ,numbertag:read_parameters.numbertag
 				};
 				read_cube_parameters.push(tmp_parameters);
@@ -252,8 +252,11 @@
 
 				var folder1 = bb1[num].addFolder('Position');
 				var cubeX = folder1.add( each_cube_parameters[num], 'x' ).min(0).max(50).step(0.01).listen();
+				var cube_delta_X = folder1.add( each_cube_parameters[num], 'delta_x' ).min(-2).max(2).step(0.01).listen();
 				var cubeY = folder1.add( each_cube_parameters[num], 'y' ).min(-30).max(30).step(0.01).listen();
+				var cube_delta_Y = folder1.add( each_cube_parameters[num], 'delta_y' ).min(-2).max(2).step(0.01).listen();
 				var cubeZ = folder1.add( each_cube_parameters[num], 'z' ).min(-3).max(10).step(0.01).listen();
+				var cube_delta_Z = folder1.add( each_cube_parameters[num], 'delta_z' ).min(-2).max(2).step(0.01).listen();
 				folder1.close();
 
 				var folder2 = bb1[num].addFolder('Size');
@@ -269,6 +272,13 @@
 				{   cube_array[num].position.y = -value;   });
 				cubeZ.onChange(function(value) 
 				{   cube_array[num].position.z = value;   });
+
+				cube_delta_X.onChange(function(value) 
+				{   cube_array[num].position.x = each_cube_parameters[num].x + value;   });
+				cube_delta_Y.onChange(function(value) 
+				{   cube_array[num].position.y = - each_cube_parameters[num].y - value;   });
+				cube_delta_Z.onChange(function(value) 
+				{   cube_array[num].position.z = each_cube_parameters[num].z + value;   });
 
 				cubeW.onChange(function(value) 
 				{   cube_array[num].scale.x = value;   });
@@ -326,6 +336,11 @@
 				each_cube_parameters[num].x = read_cube_parameters[num].x;
 				each_cube_parameters[num].y = read_cube_parameters[num].y;
 				each_cube_parameters[num].z = read_cube_parameters[num].z;
+
+				each_cube_parameters[num].delta_x = read_cube_parameters[num].delta_x;
+				each_cube_parameters[num].delta_y = read_cube_parameters[num].delta_y;
+				each_cube_parameters[num].delta_z = read_cube_parameters[num].delta_z;
+
 				each_cube_parameters[num].width = read_cube_parameters[num].width;
 				each_cube_parameters[num].height = read_cube_parameters[num].height;
 				each_cube_parameters[num].depth = read_cube_parameters[num].depth;
