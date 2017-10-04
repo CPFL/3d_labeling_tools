@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - PCD</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000000;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+
+			}
+
+			a { color: #d14826 }
+			.button { background:#999; color:#eee; padding:0.2em 0.5em; cursor:pointer }
+			.highlight { background:orange; color:#fff; }
+
+			span {
+				display: inline-block;
+				width: 60px;
+				float: left;
+				text-align: center;
+			}
+
+		</style>
+	</head>
+	<body>
+		<script src="js/three.min.js"></script>
+		<script src="js/PCDLoader.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/stats.min.js"></script>
+		<script src='js/DAT.GUI.min.js'></script>
+		<script src='js/KeyboardState.js'></script>
+
+
+		<script>
+
+		  	dat.GUI.prototype.removeFolder = function(name) {
+    			var folder = this.__folders[name];
+    			if (!folder) {
+    			  return;
+    			}
+	    		folder.close();
+	    		this.__ul.removeChild(folder.domElement.parentNode);
+	    		delete this.__folders[name];
+	    		this.onResize();
+  			}
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats;
+			var camera, controls, scene, renderer;
+			var cube;
+			var keyboard	= new KeyboardState();
+			var numbertag_list = [];
+			var gui_tag = [];
+			var calibrate_pram = [0.87,-0.15,-0.3];
+			var gui = new dat.GUI();
+
+
+			var cube_array = [];
+			var each_cube_parameters = [];
+			var read_cube_parameters = [];
+			var bb1 = [];
+			var folder_position = [];
+			var folder_size = [];
+
+			var bbox_flag = true;
+			var click_flag = false;
+
+			var projector = new THREE.Projector();
+			var click_object_index = 0;
+			//マウスのグローバル変数
+			var mouse_down = { x: 0, y: 0 };
+			var mouse_up = { x: 0, y: 0 };
+			var click_point = THREE.Vector3();
+			var click_plane_array = []
+
+			init();
+			animate();
+			function init() {
+
+				scene = new THREE.Scene();
+
+				var axisHelper = new THREE.AxisHelper( 0.1 );
+				axisHelper.position.set(0,0,0);
+				scene.add( axisHelper );
+
+				camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 0.01, 10000 );
+				camera.position.set(0,0,0.5);
+				camera.up.set(0,0,1);
+
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setClearColor( 0x000000 );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				controls = new THREE.OrbitControls( camera,renderer.domElement );
+
+				controls.rotateSpeed = 2.0;
+				controls.zoomSpeed = 0.3;
+				controls.panSpeed = 0.2;
+
+				controls.noZoom = false;
+				controls.noPan = false;
+				controls.noRotate = false;
+
+				controls.staticMoving = true;
+				controls.dynamicDampingFactor = 0.3;
+
+				controls.minDistance = 0.3;
+				controls.maxDistance = 0.3 * 100;
+
+				controls.noKey = true;
+
+				controls.enabled = false;
+
+				scene.add( camera );
+
+				var input_filename = 'input'
+				var now_flame = '000000'
+
+				var loader = new THREE.PCDLoader();
+				loader.load( input_filename + '/PCDPoints/' + now_flame + '/all.pcd', function ( mesh ) {
+
+					scene.add( mesh );
+					var center = mesh.geometry.boundingSphere.center;
+					controls.target.set( 1, 0, 0);
+					controls.update();
+
+				});
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+				container.appendChild( renderer.domElement );
+
+				stats = new Stats();
+				container.appendChild( stats.dom );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+
+				window.onmousedown = function (ev){
+					if(bbox_flag==true){
+						if (ev.target == renderer.domElement) {
+							//マウス座標2D変換
+							var rect = ev.target.getBoundingClientRect();
+							mouse_down.x =  ev.clientX - rect.left;
+							mouse_down.y =  ev.clientY - rect.top;
+
+							//マウス座標3D変換 width（横）やheight（縦）は画面サイズ
+							mouse_down.x =  (mouse_down.x / window.innerWidth) * 2 - 1;
+							mouse_down.y = -(mouse_down.y / window.innerHeight) * 2 + 1;
+
+							// マウスベクトル
+							var vector = new THREE.Vector3( mouse_down.x, mouse_down.y ,1);
+
+							// vector はスクリーン座標系なので, オブジェクトの座標系に変換
+							projector.unprojectVector( vector, camera );
+
+							// 始点, 向きベクトルを渡してレイを作成
+							var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+							// クリック判定
+							var click_object = ray.intersectObjects( cube_array );
+
+							// クリックしていたら、alertを表示
+							if ( click_object.length > 0 ){
+								click_flag = true;
+								click_object_index = cube_array.indexOf(click_object[0].object);
+								click_point = click_object[0].point;
+								click_cube = cube_array[click_object_index];
+
+								var material = new THREE.MeshBasicMaterial( { color: 0x000000, wireframe:false, transparent: true, opacity : 0.0 } );
+								var geometry = new THREE.PlaneGeometry(200, 200);
+								var click_plane = new THREE.Mesh( geometry, material );
+								click_plane.position.x = click_point.x;
+								click_plane.position.y = click_point.y;
+								click_plane.position.z = click_point.z;
+
+								if(click_point.x <= click_cube.position.x - click_cube.scale.x/2){
+
+									click_plane.rotation.y = -Math.PI / 2;
+
+								}
+
+								else if(click_point.x >= click_cube.position.x + click_cube.scale.x/2){
+
+									click_plane.rotation.y = Math.PI / 2;
+
+								}
+
+								else if(click_point.y <= click_cube.position.y - click_cube.scale.y/2){
+
+									click_plane.rotation.x = Math.PI / 2;
+
+								}
+
+								else if(click_point.y >= click_cube.position.y + click_cube.scale.y/2){
+
+									click_plane.rotation.x = -Math.PI / 2;
+
+								}
+
+								else if(click_point.z <= click_cube.position.z - click_cube.scale.z/2){
+
+									click_plane.rotation.x = Math.PI;
+
+								}
+
+							    scene.add( click_plane );
+							    click_plane_array.push(click_plane);
+
+							}
+						}
+					}
+				}
+				window.onmouseup = function(ev) {
+					if(bbox_flag==true){
+							//マウス座標2D変換
+							var rect = ev.target.getBoundingClientRect();
+							mouse_up.x =  ev.clientX - rect.left;
+							mouse_up.y =  ev.clientY - rect.top;
+
+							//マウス座標3D変換 width（横）やheight（縦）は画面サイズ
+							mouse_up.x =  (mouse_up.x / window.innerWidth) * 2 - 1;
+							mouse_up.y = -(mouse_up.y / window.innerHeight) * 2 + 1;
+
+							// マウスベクトル
+							var vector = new THREE.Vector3(  mouse_up.x, mouse_up.y ,1);
+
+							// vector はスクリーン座標系なので, オブジェクトの座標系に変換
+							projector.unprojectVector( vector, camera );
+
+							// 始点, 向きベクトルを渡してレイを作成
+							var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+							var click_object = ray.intersectObjects(click_plane_array);
+
+							if ( click_object.length > 0 && bb1[click_object_index].closed==false){
+								var drag_vector = {x:click_object[0].point.x - click_point.x, y:click_object[0].point.y - click_point.y, z:click_object[0].point.z - click_point.z};
+
+								each_cube_parameters[click_object_index].width = (click_point.x - cube_array[click_object_index].position.x)*drag_vector.x/Math.abs((click_point.x - cube_array[click_object_index].position.x)) + each_cube_parameters[click_object_index].width;
+								each_cube_parameters[click_object_index].x = drag_vector.x/2 + each_cube_parameters[click_object_index].x;
+
+								each_cube_parameters[click_object_index].height = (click_point.y - cube_array[click_object_index].position.y)*drag_vector.y/Math.abs((click_point.y - cube_array[click_object_index].position.y)) + each_cube_parameters[click_object_index].height;
+								each_cube_parameters[click_object_index].y = -drag_vector.y/2 + each_cube_parameters[click_object_index].y;
+
+								each_cube_parameters[click_object_index].depth = (click_point.z - cube_array[click_object_index].position.z)*drag_vector.z/Math.abs((click_point.z - cube_array[click_object_index].position.z)) + each_cube_parameters[click_object_index].depth;
+								each_cube_parameters[click_object_index].z = drag_vector.z/2 + each_cube_parameters[click_object_index].z;
+
+
+								updateCube(click_object_index,cube_array,each_cube_parameters)
+
+								}
+
+							if(click_flag==true){
+								click_plane_array[0].visible = false;
+								click_plane_array = [];
+
+								for(var i = 0 ; i < bb1.length; i++){
+									bb1[i].close();
+								}
+
+								bb1[click_object_index].open();
+								folder_position[click_object_index].open();
+								folder_size[click_object_index].open();
+
+
+							}
+
+
+
+					}
+				}
+				var parameters =
+				{
+					addbboxpara: function() { addbbox_initial(gui,parameters,cube_array,each_cube_parameters,read_cube_parameters,bb1); 
+						gui_reset_tag(bb1,each_cube_parameters);},i : -1
+					//,result: function() {result(1,cube_array);}
+				};
+
+				gui.add( parameters, 'addbboxpara' ).name("AddBoundingBox");
+				//gui.add(parameters,'result').name("result");
+
+				readTextFile(input_filename + '/Annotations/' + now_flame + '.txt',gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1);
+
+				gui.open();
+
+				gui_add_tag(bb1,each_cube_parameters);
+
+			}
+
+
+			function readTextFile(file,gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1){
+			    var rawFile = new XMLHttpRequest();
+			    rawFile.open("GET", file, false);
+    			rawFile.onreadystatechange = function (){
+
+		        if(rawFile.readyState === 4){
+
+            		if(rawFile.status === 200 || rawFile.status == 0){
+
+                		var allText = rawFile.responseText;
+                		for (var i = 0 ; i < allText.split("\n").length;i++){
+                			if(allText.split("\n")[i].split(",").length==15){
+	                			addbbox_read(allText.split("\n")[i],gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1);
+                				}
+                		    }
+            			}
+        			}
+    			}
+    			rawFile.send(null);
+			}
+
+
+			function addbbox_read(str,gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1){
+				var readfile_parameters =
+				{
+					x: parseFloat(str.split(",")[13])+calibrate_pram[0], y: parseFloat(str.split(",")[11])+calibrate_pram[1], z:-parseFloat(str.split(",")[12])+calibrate_pram[2], delta_x:0, delta_y:0, delta_z:0,
+					width: parseFloat(str.split(",")[8]), height: parseFloat(str.split(",")[9]), depth: parseFloat(str.split(",")[10]) ,numbertag:parameters.i+1
+				};
+
+
+      			addbbox_count(gui,parameters,cube_array,each_cube_parameters,readfile_parameters,read_cube_parameters,bb1);
+
+				}
+
+			function addbbox_initial(gui, parameters,cube_array,each_cube_parameters,read_cube_parameters,bb1)
+			{
+
+				var init_parameters =
+				{
+					x: 1, y: 0, z: -1, delta_x:0, delta_y:0, delta_z:0,
+					width: 0.5, height: 0.5, depth: 0.5 ,numbertag:parameters.i+1
+				};
+
+
+				addbbox_count(gui,parameters,cube_array,each_cube_parameters,init_parameters,read_cube_parameters,bb1);
+
+			}
+
+
+			function addbbox_count(gui, parameters,cube_array,each_cube_parameters,read_parameters,read_cube_parameters,bb1)
+			{
+
+				each_cube_parameters.push(read_parameters);
+
+				var tmp_parameters =
+				{
+					x: read_parameters.x, y: read_parameters.y, z:read_parameters.z,  delta_x:read_parameters.delta_x, delta_y:read_parameters.delta_y, delta_z:read_parameters.delta_z,
+					width: read_parameters.width, height: read_parameters.height, depth: read_parameters.depth ,numbertag:read_parameters.numbertag
+				};
+				read_cube_parameters.push(tmp_parameters);
+
+				parameters.i = 1 + parameters.i;
+
+				addbbox(gui,parameters.i,cube_array,each_cube_parameters,read_cube_parameters,bb1);
+
+			}
+
+			function addbbox(gui,num,cube_array,each_cube_parameters,read_cube_parameters,bb1)
+			{
+
+
+				var cubeGeometry = new THREE.CubeGeometry(1.0,1.0,1.0);
+				var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0x008866, wireframe:true } );
+				cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
+				cube.position.set(each_cube_parameters[num].x,-each_cube_parameters[num].y,each_cube_parameters[num].z);
+				cube.scale.set(each_cube_parameters[num].width, each_cube_parameters[num].height , each_cube_parameters[num].depth);
+				scene.add(cube);
+				cube_array.push(cube);
+				addbbox_gui(gui,num,cube_array,each_cube_parameters,read_cube_parameters,bb1);
+
+
+			}
+
+			function addbbox_gui(gui,num,cube_array,each_cube_parameters,read_cube_parameters,bb1)
+			{
+
+				var bb = gui.addFolder('BoundingBox'+String(num));
+				bb1.push(bb);
+
+				var folder1 = bb1[num].addFolder('Position');
+				var cubeX = folder1.add( each_cube_parameters[num], 'x' ).min(0).max(50).step(0.01).listen();
+				var cube_delta_X = folder1.add( each_cube_parameters[num], 'delta_x' ).min(-2).max(2).step(0.01).listen();
+				var cubeY = folder1.add( each_cube_parameters[num], 'y' ).min(-30).max(30).step(0.01).listen();
+				var cube_delta_Y = folder1.add( each_cube_parameters[num], 'delta_y' ).min(-2).max(2).step(0.01).listen();
+				var cubeZ = folder1.add( each_cube_parameters[num], 'z' ).min(-3).max(10).step(0.01).listen();
+				var cube_delta_Z = folder1.add( each_cube_parameters[num], 'delta_z' ).min(-2).max(2).step(0.01).listen();
+				folder1.close();
+				folder_position.push(folder1);
+
+				var folder2 = bb1[num].addFolder('Size');
+				var cubeW = folder2.add( each_cube_parameters[num], 'width' ).min(0).max(10).step(0.01).listen();
+				var cubeH = folder2.add( each_cube_parameters[num], 'height' ).min(0).max(10).step(0.01).listen();
+				var cubeD = folder2.add( each_cube_parameters[num], 'depth' ).min(0).max(10).step(0.01).listen();
+				folder2.close();
+				folder_size.push(folder2);
+
+
+				cubeX.onChange(function(value) 
+				{   cube_array[num].position.x = value;   });
+				cubeY.onChange(function(value) 
+				{   cube_array[num].position.y = -value;   });
+				cubeZ.onChange(function(value) 
+				{   cube_array[num].position.z = value;   });
+
+				cube_delta_X.onChange(function(value) 
+				{   cube_array[num].position.x = each_cube_parameters[num].x + value;   });
+				cube_delta_Y.onChange(function(value) 
+				{   cube_array[num].position.y = - each_cube_parameters[num].y - value;   });
+				cube_delta_Z.onChange(function(value) 
+				{   cube_array[num].position.z = each_cube_parameters[num].z + value;   });
+
+				cubeW.onChange(function(value) 
+				{   cube_array[num].scale.x = value;   });
+				cubeH.onChange(function(value) 
+				{   cube_array[num].scale.y = value;   });
+				cubeD.onChange(function(value) 
+				{   cube_array[num].scale.z = value;   });
+
+
+				var reset_parameters =
+				{
+					reset: function() { resetCube(num,cube_array,each_cube_parameters,read_cube_parameters); },
+					delete: function (){ gui.removeFolder('BoundingBox'+String(num)); cube_array[num].visible=false;}
+				};
+				numbertag_list.push(num);
+
+				bb1[num].add(reset_parameters, 'reset' ).name("Reset");
+				d = bb1[num].add(reset_parameters, 'delete' ).name("Delete");
+
+			}
+
+			function gui_add_tag(bb1,each_cube_parameters){
+				for (var i = 0 ; i < numbertag_list.length; i++){
+					tag = bb1[i].add( each_cube_parameters[i], 'numbertag' ,numbertag_list).name("BoundingBoxTag").onChange( gui_add_tag );
+					gui_tag.push(tag)
+				}
+			}
+
+			function gui_reset_tag(bb1,each_cube_parameters){
+				for (var i = 0 ; i < numbertag_list.length-1; i++){
+					bb1[i].remove(gui_tag[i]);
+				}
+				gui_tag = [];
+				for (var i = 0 ; i < numbertag_list.length; i++){
+					tag = bb1[i].add( each_cube_parameters[i], 'numbertag' ,numbertag_list).name("BoundingBoxTag").onChange( gui_add_tag );
+					gui_tag.push(tag)
+				}
+			}
+
+
+			function updateCube(num,cube_array,each_cube_parameters)
+			{
+				cube_array[num].position.x = each_cube_parameters[num].x;
+				cube_array[num].position.y = -each_cube_parameters[num].y;
+				cube_array[num].position.z = each_cube_parameters[num].z;
+				cube_array[num].scale.x = each_cube_parameters[num].width;
+				cube_array[num].scale.y = each_cube_parameters[num].height;
+				cube_array[num].scale.z = each_cube_parameters[num].depth;
+			}
+
+
+			function resetCube(num,cube_array,each_cube_parameters,read_cube_parameters)
+			{
+
+				each_cube_parameters[num].x = read_cube_parameters[num].x;
+				each_cube_parameters[num].y = read_cube_parameters[num].y;
+				each_cube_parameters[num].z = read_cube_parameters[num].z;
+
+				each_cube_parameters[num].delta_x = read_cube_parameters[num].delta_x;
+				each_cube_parameters[num].delta_y = read_cube_parameters[num].delta_y;
+				each_cube_parameters[num].delta_z = read_cube_parameters[num].delta_z;
+
+				each_cube_parameters[num].width = read_cube_parameters[num].width;
+				each_cube_parameters[num].height = read_cube_parameters[num].height;
+				each_cube_parameters[num].depth = read_cube_parameters[num].depth;
+
+				updateCube(num,cube_array,each_cube_parameters);
+			}
+
+
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				controls.handleResize();
+
+			}
+
+
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				renderer.render( scene, camera );
+				update();
+				update_color();
+			}
+
+
+			function update(){
+				keyboard.update();
+				if ( keyboard.down("shift") ){
+					controls.enabled = true;
+					bbox_flag = false;
+				}
+				if ( keyboard.up("shift") ){
+					controls.enabled = false;
+					bbox_flag = true;
+				}
+				controls.update();
+				stats.update();
+
+			}
+
+			function update_color(){
+				for (var i = 0 ; i < numbertag_list.length; i++){
+				if(bb1[i].closed==false){
+					cube_array[i].material.color.setHex( 0xff0000 );
+					folder_position[i].open();
+					folder_size[i].open();
+				}
+				if(bb1[i].closed==true){
+					cube_array[i].material.color.setHex( 0x008866 );
+				}}
+			}
+
+			function result(num, cube_array, each_cube_parameters) {
+				alert(each_cube_parameters[num].numbertag) //BoundingBox Tag
+				alert(-cube_array[num].position.y-calibrate_pram[1])//position.x
+				alert(-cube_array[num].position.z+calibrate_pram[2])//position.y
+				alert(cube_array[num].position.x-calibrate_pram[0])//position.z
+				alert(cube_array[num].scale.x)//scale.x
+				alert(cube_array[num].scale.y)//scale.y
+				alert(cube_array[num].scale.z)//scale.z
+			}
+
+		</script>
+	</body>
+</html>
