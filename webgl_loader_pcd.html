@@ -74,7 +74,19 @@
 			var cube_array = [];
 			var each_cube_parameters = [];
 			var read_cube_parameters = [];
-			var bb1 = []
+			var bb1 = [];
+			var folder_position = [];
+			var folder_size = [];
+
+			var bbox_flag = true;
+
+			var projector = new THREE.Projector();
+			var click_object_index = 0;
+			//マウスのグローバル変数
+			var mouse_down = { x: 0, y: 0 };
+			var mouse_up = { x: 0, y: 0 };
+			var click_point = THREE.Vector3();
+			var click_plane_array = []
 
 			init();
 			animate();
@@ -142,6 +154,131 @@
 				window.addEventListener( 'resize', onWindowResize, false );
 
 
+				window.onmousedown = function (ev){
+					if(bbox_flag==true){
+						if (ev.target == renderer.domElement) {
+							//マウス座標2D変換
+							var rect = ev.target.getBoundingClientRect();
+							mouse_down.x =  ev.clientX - rect.left;
+							mouse_down.y =  ev.clientY - rect.top;
+
+							//マウス座標3D変換 width（横）やheight（縦）は画面サイズ
+							mouse_down.x =  (mouse_down.x / window.innerWidth) * 2 - 1;
+							mouse_down.y = -(mouse_down.y / window.innerHeight) * 2 + 1;
+
+							// マウスベクトル
+							var vector = new THREE.Vector3( mouse_down.x, mouse_down.y ,1);
+
+							// vector はスクリーン座標系なので, オブジェクトの座標系に変換
+							projector.unprojectVector( vector, camera );
+
+							// 始点, 向きベクトルを渡してレイを作成
+							var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+							// クリック判定
+							var click_object = ray.intersectObjects( cube_array );
+
+							// クリックしていたら、alertを表示
+							if ( click_object.length > 0 ){
+								click_object_index = cube_array.indexOf(click_object[0].object);
+								click_point = click_object[0].point;
+								click_cube = cube_array[click_object_index];
+
+								var material = new THREE.MeshBasicMaterial( { color: 0x000000, wireframe:false, transparent: true, opacity : 0.0 } );
+								var geometry = new THREE.PlaneGeometry(200, 200);
+								var click_plane = new THREE.Mesh( geometry, material );
+								click_plane.position.x = click_point.x;
+								click_plane.position.y = click_point.y;
+								click_plane.position.z = click_point.z;
+
+								if(click_point.x <= click_cube.position.x - click_cube.scale.x/2){
+
+									click_plane.rotation.y = -Math.PI / 2;
+
+								}
+
+								else if(click_point.x >= click_cube.position.x + click_cube.scale.x/2){
+
+									click_plane.rotation.y = Math.PI / 2;
+
+								}
+
+								else if(click_point.y <= click_cube.position.y - click_cube.scale.y/2){
+
+									click_plane.rotation.x = Math.PI / 2;
+
+								}
+
+								else if(click_point.y >= click_cube.position.y + click_cube.scale.y/2){
+
+									click_plane.rotation.x = -Math.PI / 2;
+
+								}
+
+								else if(click_point.z <= click_cube.position.z - click_cube.scale.z/2){
+
+									click_plane.rotation.x = Math.PI;
+
+								}
+
+							    scene.add( click_plane );
+							    click_plane_array.push(click_plane);
+
+							}
+						}
+					}
+				}
+				window.onmouseup = function(ev) {
+					if(bbox_flag==true){
+							//マウス座標2D変換
+							var rect = ev.target.getBoundingClientRect();
+							mouse_up.x =  ev.clientX - rect.left;
+							mouse_up.y =  ev.clientY - rect.top;
+
+							//マウス座標3D変換 width（横）やheight（縦）は画面サイズ
+							mouse_up.x =  (mouse_up.x / window.innerWidth) * 2 - 1;
+							mouse_up.y = -(mouse_up.y / window.innerHeight) * 2 + 1;
+
+							// マウスベクトル
+							var vector = new THREE.Vector3(  mouse_up.x, mouse_up.y ,1);
+
+							// vector はスクリーン座標系なので, オブジェクトの座標系に変換
+							projector.unprojectVector( vector, camera );
+
+							// 始点, 向きベクトルを渡してレイを作成
+							var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+							var click_object = ray.intersectObjects(click_plane_array);
+
+							if ( click_object.length > 0 && bb1[click_object_index].closed==false){
+								var drag_vector = {x:click_object[0].point.x - click_point.x, y:click_object[0].point.y - click_point.y, z:click_object[0].point.z - click_point.z};
+
+								each_cube_parameters[click_object_index].width = (click_point.x - cube_array[click_object_index].position.x)*drag_vector.x/Math.abs((click_point.x - cube_array[click_object_index].position.x)) + each_cube_parameters[click_object_index].width;
+								each_cube_parameters[click_object_index].x = drag_vector.x/2 + each_cube_parameters[click_object_index].x;
+
+								each_cube_parameters[click_object_index].height = (click_point.y - cube_array[click_object_index].position.y)*drag_vector.y/Math.abs((click_point.y - cube_array[click_object_index].position.y)) + each_cube_parameters[click_object_index].height;
+								each_cube_parameters[click_object_index].y = -drag_vector.y/2 + each_cube_parameters[click_object_index].y;
+
+								each_cube_parameters[click_object_index].depth = (click_point.z - cube_array[click_object_index].position.z)*drag_vector.z/Math.abs((click_point.z - cube_array[click_object_index].position.z)) + each_cube_parameters[click_object_index].depth;
+								each_cube_parameters[click_object_index].z = drag_vector.z/2 + each_cube_parameters[click_object_index].z;
+
+
+								updateCube(click_object_index,cube_array,each_cube_parameters)
+								click_plane_array[0].visible = false;
+								click_plane_array = []
+
+
+							}
+
+							for(var i = 0 ; i < bb1.length; i++){
+								bb1[i].close();
+							}
+
+							bb1[click_object_index].open();
+							folder_position[click_object_index].open();
+							folder_size[click_object_index].open();
+					}
+				}
 				var parameters =
 				{
 					addbboxpara: function() { addbbox_initial(gui,parameters,cube_array,each_cube_parameters,read_cube_parameters,bb1); 
@@ -158,8 +295,8 @@
 
 				gui_add_tag(bb1,each_cube_parameters);
 
-
 			}
+
 
 			function readTextFile(file,gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1){
 			    var rawFile = new XMLHttpRequest();
@@ -258,12 +395,14 @@
 				var cubeZ = folder1.add( each_cube_parameters[num], 'z' ).min(-3).max(10).step(0.01).listen();
 				var cube_delta_Z = folder1.add( each_cube_parameters[num], 'delta_z' ).min(-2).max(2).step(0.01).listen();
 				folder1.close();
+				folder_position.push(folder1);
 
 				var folder2 = bb1[num].addFolder('Size');
 				var cubeW = folder2.add( each_cube_parameters[num], 'width' ).min(0).max(10).step(0.01).listen();
 				var cubeH = folder2.add( each_cube_parameters[num], 'height' ).min(0).max(10).step(0.01).listen();
 				var cubeD = folder2.add( each_cube_parameters[num], 'depth' ).min(0).max(10).step(0.01).listen();
 				folder2.close();
+				folder_size.push(folder2);
 
 
 				cubeX.onChange(function(value) 
@@ -366,27 +505,37 @@
 				requestAnimationFrame( animate );
 				renderer.render( scene, camera );
 				update();
-				change_color();
+				update_color();
 			}
 
 
 			function update(){
 				keyboard.update();
-				if ( keyboard.down("shift") ) controls.enabled = true;
-				if ( keyboard.up("shift") ) controls.enabled = false;
+				if ( keyboard.down("shift") ){
+					controls.enabled = true;
+					bbox_flag = false;
+				}
+				if ( keyboard.up("shift") ){
+					controls.enabled = false;
+					bbox_flag = true;
+				}
 				controls.update();
 				stats.update();
 
 			}
-			function change_color(){
+
+			function update_color(){
 				for (var i = 0 ; i < numbertag_list.length; i++){
 				if(bb1[i].closed==false){
 					cube_array[i].material.color.setHex( 0xff0000 );
+					folder_position[i].open();
+					folder_size[i].open();
 				}
 				if(bb1[i].closed==true){
 					cube_array[i].material.color.setHex( 0x008866 );
 				}}
 			}
+
 			function result(num, cube_array, each_cube_parameters) {
 				alert(each_cube_parameters[num].numbertag) //BoundingBox Tag
 				alert(-cube_array[num].position.y-calibrate_pram[1])//position.x
@@ -396,8 +545,6 @@
 				alert(cube_array[num].scale.y)//scale.y
 				alert(cube_array[num].scale.z)//scale.z
 			}
-
-
 
 		</script>
 	</body>
