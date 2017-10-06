@@ -333,7 +333,7 @@
 				var readfile_parameters =
 				{
 					x: parseFloat(str.split(",")[13])+calibrate_pram[0], y: parseFloat(str.split(",")[11])+calibrate_pram[1], z:-parseFloat(str.split(",")[12])+calibrate_pram[2], delta_x:0, delta_y:0, delta_z:0,
-					width: parseFloat(str.split(",")[8]), height: parseFloat(str.split(",")[9]), depth: parseFloat(str.split(",")[10]) ,numbertag:parameters.i+1
+					width: parseFloat(str.split(",")[8]), height: parseFloat(str.split(",")[9]), depth: parseFloat(str.split(",")[10]) , yaw:0, numbertag:parameters.i+1
 				};
 
 
@@ -347,7 +347,7 @@
 				var init_parameters =
 				{
 					x: 1, y: 0, z: -1, delta_x:0, delta_y:0, delta_z:0,
-					width: 0.5, height: 0.5, depth: 0.5 ,numbertag:parameters.i+1
+					width: 0.5, height: 0.5, depth: 0.5, yaw:0, numbertag:parameters.i+1
 				};
 
 
@@ -364,7 +364,7 @@
 				var tmp_parameters =
 				{
 					x: read_parameters.x, y: read_parameters.y, z:read_parameters.z,  delta_x:read_parameters.delta_x, delta_y:read_parameters.delta_y, delta_z:read_parameters.delta_z,
-					width: read_parameters.width, height: read_parameters.height, depth: read_parameters.depth ,numbertag:read_parameters.numbertag
+					width: read_parameters.width, height: read_parameters.height, depth: read_parameters.depth, yaw:read_parameters.yaw ,numbertag:read_parameters.numbertag
 				};
 				read_cube_parameters.push(tmp_parameters);
 
@@ -403,6 +403,8 @@
 				var cube_delta_Y = folder1.add( each_cube_parameters[num], 'delta_y' ).min(-2).max(2).step(0.01).listen();
 				var cubeZ = folder1.add( each_cube_parameters[num], 'z' ).min(-3).max(10).step(0.01).listen();
 				var cube_delta_Z = folder1.add( each_cube_parameters[num], 'delta_z' ).min(-2).max(2).step(0.01).listen();
+				var cubeYaw = folder1.add( each_cube_parameters[num], 'yaw' ).min(-Math.PI/2).max(Math.PI/2).step(0.05).listen();
+
 				folder1.close();
 				folder_position.push(folder1);
 
@@ -427,6 +429,8 @@
 				{   cube_array[num].position.y = - each_cube_parameters[num].y - value;   });
 				cube_delta_Z.onChange(function(value) 
 				{   cube_array[num].position.z = each_cube_parameters[num].z + value;   });
+				cubeYaw.onChange(function(value) 
+				{   cube_array[num].rotation.z = value;   });
 
 				cubeW.onChange(function(value) 
 				{   cube_array[num].scale.x = value;   });
@@ -472,6 +476,7 @@
 				cube_array[num].position.x = each_cube_parameters[num].x;
 				cube_array[num].position.y = -each_cube_parameters[num].y;
 				cube_array[num].position.z = each_cube_parameters[num].z;
+				cube_array[num].rotation.z = each_cube_parameters[num].yaw;
 				cube_array[num].scale.x = each_cube_parameters[num].width;
 				cube_array[num].scale.y = each_cube_parameters[num].height;
 				cube_array[num].scale.z = each_cube_parameters[num].depth;
@@ -484,6 +489,7 @@
 				each_cube_parameters[num].x = read_cube_parameters[num].x;
 				each_cube_parameters[num].y = read_cube_parameters[num].y;
 				each_cube_parameters[num].z = read_cube_parameters[num].z;
+				each_cube_parameters[num].yaw = read_cube_parameters[num].yaw;
 
 				each_cube_parameters[num].delta_x = read_cube_parameters[num].delta_x;
 				each_cube_parameters[num].delta_y = read_cube_parameters[num].delta_y;
@@ -550,6 +556,7 @@
 				alert(-cube_array[num].position.y-calibrate_pram[1])//position.x
 				alert(-cube_array[num].position.z+calibrate_pram[2])//position.y
 				alert(cube_array[num].position.x-calibrate_pram[0])//position.z
+				alert(cube_array[num].rotation.z)//yaw
 				alert(cube_array[num].scale.x)//scale.x
 				alert(cube_array[num].scale.y)//scale.y
 				alert(cube_array[num].scale.z)//scale.z
