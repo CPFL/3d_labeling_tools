@@ -88,6 +88,10 @@
 			var mouse_up = { x: 0, y: 0 };
 			var click_point = THREE.Vector3();
 			var click_plane_array = []
+			var attribute = ["Car", "Pedestrian", "Motorbike", "Bus", "Truck", "Cyclist", "Train", "Obstacle", "Stop_signal", "Wait_signal", "Gosignal"];
+			var input_filename = 'input'
+			var now_flame = 0
+			var ground_mesh
 
 			init();
 			animate();
@@ -132,18 +136,8 @@
 
 				scene.add( camera );
 
-				var input_filename = 'input'
-				var now_flame = '000000'
-
-				var loader = new THREE.PCDLoader();
-				loader.load( input_filename + '/PCDPoints/' + now_flame + '/all.pcd', function ( mesh ) {
-
-					scene.add( mesh );
-					var center = mesh.geometry.boundingSphere.center;
-					controls.target.set( 1, 0, 0);
-					controls.update();
-
-				});
+				controls.target.set( 1, 0, 0);
+				controls.update();
 
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
@@ -291,14 +285,19 @@
 				var parameters =
 				{
 					addbboxpara: function() { addbbox_initial(gui,parameters,cube_array,each_cube_parameters,read_cube_parameters,bb1); 
-						gui_reset_tag(bb1,each_cube_parameters);},i : -1
+						gui_reset_tag(bb1,each_cube_parameters);}, i : -1 ,next: function() { data_reload_next(parameters);}, before: function() { data_reload_before(parameters);}, flame:now_flame
 					//,result: function() {result(1,cube_array);}
 				};
 
 				gui.add( parameters, 'addbboxpara' ).name("AddBoundingBox");
+				gui.add( parameters, 'flame' ).name("Nowflame").listen();
+				gui.add( parameters, 'next' ).name("NextData");
+				gui.add( parameters, 'before' ).name("BeforeData");
 				//gui.add(parameters,'result').name("result");
 
-				readTextFile(input_filename + '/Annotations/' + now_flame + '.txt',gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1);
+				data_load(parameters);
+
+				readTextFile(input_filename + '/Annotations/' + ( '000000'  + parameters.flame ).slice( -6 ) + '.txt',gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1);
 
 				gui.open();
 
@@ -306,7 +305,40 @@
 
 			}
 
+			function data_load(parameters){
+				var pcd_loader = new THREE.PCDLoader();
+				pcd_loader.load( input_filename + '/PCDPoints/' + ( '000000'  + parameters.flame ).slice( -6 )  + '/all.pcd', function ( mesh ) {
 
+					scene.add( mesh );
+					ground_mesh = mesh;
+					var center = mesh.geometry.boundingSphere.center;
+
+				});
+				var image =  new THREE.ImageUtils.loadTexture(input_filename + '/JPEGImages/' + ( '000000'  + parameters.flame ).slice( -6 )  + '.jpg');
+				var material = new THREE.MeshBasicMaterial({
+					map: image
+				});
+				var geometry = new THREE.PlaneGeometry(3, 2);
+				var image_plane = new THREE.Mesh( geometry, material );
+				image_plane.position.x = 3;
+				image_plane.position.z = -0.3;
+				image_plane.rotation.y = -Math.PI/2;
+				image_plane.rotation.x = Math.PI/2;
+				scene.add( image_plane );
+			}
+
+			function data_reload_next(parameters){
+				parameters.flame = parameters.flame + 1;
+				ground_mesh.visible = false;
+				data_load(parameters);
+			}
+
+			function data_reload_before(parameters){
+				parameters.flame = parameters.flame - 1;
+				ground_mesh.visible = false;
+				data_load(parameters);
+
+			}
 			function readTextFile(file,gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1){
 			    var rawFile = new XMLHttpRequest();
 			    rawFile.open("GET", file, false);
@@ -333,7 +365,7 @@
 				var readfile_parameters =
 				{
 					x: parseFloat(str.split(",")[13])+calibrate_pram[0], y: parseFloat(str.split(",")[11])+calibrate_pram[1], z:-parseFloat(str.split(",")[12])+calibrate_pram[2], delta_x:0, delta_y:0, delta_z:0,
-					width: parseFloat(str.split(",")[8]), height: parseFloat(str.split(",")[9]), depth: parseFloat(str.split(",")[10]) , yaw:0, numbertag:parameters.i+1
+					width: parseFloat(str.split(",")[8]), height: parseFloat(str.split(",")[9]), depth: parseFloat(str.split(",")[10]) , yaw:parseFloat(str.split(",")[14]), numbertag:parameters.i+1, label:str.split(",")[0]
 				};
 
 
@@ -347,7 +379,7 @@
 				var init_parameters =
 				{
 					x: 1, y: 0, z: -1, delta_x:0, delta_y:0, delta_z:0,
-					width: 0.5, height: 0.5, depth: 0.5, yaw:0, numbertag:parameters.i+1
+					width: 0.5, height: 0.5, depth: 0.5, yaw:0, numbertag:parameters.i+1,label:""
 				};
 
 
@@ -364,7 +396,7 @@
 				var tmp_parameters =
 				{
 					x: read_parameters.x, y: read_parameters.y, z:read_parameters.z,  delta_x:read_parameters.delta_x, delta_y:read_parameters.delta_y, delta_z:read_parameters.delta_z,
-					width: read_parameters.width, height: read_parameters.height, depth: read_parameters.depth, yaw:read_parameters.yaw ,numbertag:read_parameters.numbertag
+					width: read_parameters.width, height: read_parameters.height, depth: read_parameters.depth, yaw:read_parameters.yaw ,numbertag:read_parameters.numbertag,label:read_parameters.label
 				};
 				read_cube_parameters.push(tmp_parameters);
 
@@ -446,6 +478,7 @@
 					delete: function (){ gui.removeFolder('BoundingBox'+String(num)); cube_array[num].visible=false;}
 				};
 				numbertag_list.push(num);
+				labeltag = bb1[num].add( each_cube_parameters[num], 'label' ,attribute).name("Attribute");
 
 				bb1[num].add(reset_parameters, 'reset' ).name("Reset");
 				d = bb1[num].add(reset_parameters, 'delete' ).name("Delete");
@@ -552,7 +585,7 @@
 			}
 
 			function result(num, cube_array, each_cube_parameters) {
-				alert(each_cube_parameters[num].numbertag) //BoundingBox Tag
+				alert(each_cube_parameters[num].label) //BoundingBox Tag
 				alert(-cube_array[num].position.y-calibrate_pram[1])//position.x
 				alert(-cube_array[num].position.z+calibrate_pram[2])//position.y
 				alert(cube_array[num].position.x-calibrate_pram[0])//position.z
