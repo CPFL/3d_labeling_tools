@@ -37,6 +37,8 @@
 		</style>
 	</head>
 	<body>
+		<div id="canvas3d" style="position:fixed; top:0px; left:0px; width:100%; height:100%; z-index: 0; background-color: #000000;"></div>
+		<canvas id="canvas2d" style="position:fixed; top:0px; left:0px; width:25%; height:25%; z-index: 100; background-color:rgba(0,0,0,0); pointer-events: none;"></canvas>
 		<script src="js/three.min.js"></script>
 		<script src="js/PCDLoader.js"></script>
 		<script src="js/OrbitControls.js"></script>
@@ -130,7 +132,7 @@
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
-			var container, stats;
+			var canvas2D,stats,image_2d,ctx;
 			var camera, controls, scene, renderer;
 			var cube;
 			var keyboard	= new KeyboardState();
@@ -164,6 +166,7 @@
 			var now_flame = 0
 			var ground_mesh
 			var image_array = []
+			var bird_view_flag = false;
 
 			init();
 			animate();
@@ -184,8 +187,6 @@
 				renderer.setClearColor( 0x000000 );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
-
 				controls = new THREE.OrbitControls( camera,renderer.domElement );
 
 				controls.rotateSpeed = 2.0;
@@ -211,12 +212,11 @@
 				controls.target.set( 1, 0, 0);
 				controls.update();
 
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
-				container.appendChild( renderer.domElement );
+				var canvas3D = document.getElementById('canvas3d');
+				canvas3D.appendChild(renderer.domElement);
 
 				stats = new Stats();
-				container.appendChild( stats.dom );
+				canvas3D.appendChild( stats.dom );
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
@@ -357,7 +357,7 @@
 				var parameters =
 				{
 					addbboxpara: function() { addbbox_initial(gui,parameters,cube_array,each_cube_parameters,read_cube_parameters,bb1); 
-						gui_reset_tag(bb1,each_cube_parameters);}, i : -1 ,next: function() { data_reload_next(parameters);}, before: function() { data_reload_before(parameters);}, flame:now_flame, image_checkbox:true
+						gui_reset_tag(bb1,each_cube_parameters);}, i : -1 ,next: function() { data_reload_next(parameters);}, before: function() { data_reload_before(parameters);}, flame:now_flame, image_checkbox:true , bird_view: function() { bird_view(parameters);}, camera_view: function() { camera_view(parameters);}
 					//,result: function() {result(1,cube_array);}
 				};
 
@@ -365,7 +365,9 @@
 				gui.add( parameters, 'flame' ).name("Nowflame").listen();
 				gui.add( parameters, 'next' ).name("NextData");
 				gui.add( parameters, 'before' ).name("BeforeData");
-				var ImageCheck = gui.add( parameters, 'image_checkbox' ).name("Image");
+				gui.add(parameters,'bird_view').name("BirdView");
+				gui.add(parameters,'camera_view').name("CameraView");
+				var ImageCheck = gui.add( parameters, 'image_checkbox' ).name("Image").listen();
 				//gui.add(parameters,'result').name("result");
 
 				data_load(parameters);
@@ -376,8 +378,19 @@
 
 				gui_add_tag(bb1,each_cube_parameters);
 
-				ImageCheck.onChange(function(value){image_array[0].visible = value;})
+				ImageCheck.onChange(function(value){if(bird_view_flag==false){image_array[0].visible = value;} else if(bird_view_flag==true && value==true) {
+		        canvas2D.style.display="block"} else if(bird_view_flag==true && value==false) {canvas2D.style.display="none"}})
 				//result(0, cube_array, each_cube_parameters)
+
+				canvas2D = document.getElementById('canvas2d');
+				ctx = canvas2D.getContext('2d');
+				ctx.scale(0.3,0.3);
+				image_2d = new Image();
+				image_2d.src = input_filename + '/JPEGImages/' + ( '000000'  + parameters.flame ).slice( -6 )  + '.jpg?' + new Date().getTime();
+				image_2d.onload = function() {
+				    ctx.drawImage(image_2d, 0, 0);
+				  }
+				canvas2D.style.display="none"
 
 			}
 
@@ -406,6 +419,13 @@
 				scene.add( image_plane );
 				image_array = [];
 				image_array.push(image_plane);
+
+				image_2d = new Image();
+				image_2d.src = input_filename + '/JPEGImages/' + ( '000000'  + parameters.flame ).slice( -6 )  + '.jpg?' + new Date().getTime();
+				image_2d.onload = function() {
+				    ctx.drawImage(image_2d, 0, 0);
+				  }
+
 			}
 
 			function data_reload_next(parameters){
@@ -421,6 +441,27 @@
 
 			}
 
+			function bird_view(parameters){
+		        camera.position.set(0, 0, 15);
+		        camera.up.set(1, 0, 0);
+		        camera.lookAt(new THREE.Vector3(0, 0, 0));
+		        controls.target.set( 0, 0, 0);
+		        bird_view_flag = true;
+		        parameters.image_checkbox = true;
+		        image_array[0].visible = false;
+		        canvas2D.style.display="block"
+		    }
+
+			function camera_view(parameters){
+		        camera.position.set(0,0,0.5);
+		        camera.up.set(0, 0, 1);
+		        camera.lookAt(new THREE.Vector3(1, 0, 0));
+		        controls.target.set( 1, 0, 0);
+		        parameters.image_checkbox = true;
+		        image_array[0].visible = true;
+		        canvas2D.style.display="none"
+		        bird_view_flag=false;
+			}
 
 			function readTextFile(file,gui,cube_array,each_cube_parameters,parameters,read_cube_parameters,bb1){
 			    var rawFile = new XMLHttpRequest();
@@ -634,7 +675,6 @@
 
 
 			function animate() {
-
 				requestAnimationFrame( animate );
 				renderer.render( scene, camera );
 				update();
@@ -656,6 +696,7 @@
 				stats.update();
 
 			}
+
 
 			function update_color(){
 				for (var i = 0 ; i < numbertag_list.length; i++){
