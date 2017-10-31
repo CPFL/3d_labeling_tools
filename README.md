@@ -1,7 +1,10 @@
 # 3d_labeling_tool
 
-You can see sample point cloud and label it.
-Please open index.html using FireFox.
+In this code, you can see sample point cloud and label it.
+Please clone this code and open index.html using FireFox.
+Or please check web site demo.
+
+<https://cpfl.github.io/3d_labeling_tools/>
 
 # How to label
 
@@ -40,7 +43,6 @@ Push Shift and Scroll to go near or away.
 ![Select Bounding Box](./demo/camera_position.gif)
 
 
-## Demo
-
+## Demo video
 
 <https://youtu.be/PGO9lkgnTF0>
