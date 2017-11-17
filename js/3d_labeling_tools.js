@@ -470,26 +470,26 @@ function init() {
 					click_plane.position.x = click_point.x;
 					click_plane.position.y = click_point.y;
 					click_plane.position.z = click_point.z;
-					if(click_point.x <= click_cube.position.x - click_cube.scale.x/2){
-						click_plane.rotation.y = -Math.PI / 2;
-					}
-
-					else if(click_point.x >= click_cube.position.x + click_cube.scale.x/2){
-						click_plane.rotation.y = Math.PI / 2;
-					}
-
-					else if(click_point.y <= click_cube.position.y - click_cube.scale.y/2){
+					var normal  = click_object[0].face;
+					if([normal.a,normal.b,normal.c].toString() == [6,3,2].toString() || [normal.a,normal.b,normal.c].toString() == [7,6,2].toString() ){
 						click_plane.rotation.x = Math.PI / 2;
+						click_plane.rotation.y = cube_array[click_object_index].rotation.z;
 					}
-
-					else if(click_point.y >= click_cube.position.y + click_cube.scale.y/2){
+					else if([normal.a,normal.b,normal.c].toString() == [6,7,5].toString() || [normal.a,normal.b,normal.c].toString() == [4,6,5].toString() ){
 						click_plane.rotation.x = -Math.PI / 2;
+						click_plane.rotation.y = -Math.PI / 2 - cube_array[click_object_index].rotation.z;
 					}
-
-					else if(click_point.z <= click_cube.position.z - click_cube.scale.z/2){
-						click_plane.rotation.x = Math.PI;
+					else if([normal.a,normal.b,normal.c].toString() == [0,2,1].toString() || [normal.a,normal.b,normal.c].toString() == [2,3,1].toString() ){
+						click_plane.rotation.x = Math.PI / 2;
+						click_plane.rotation.y = Math.PI / 2 + cube_array[click_object_index].rotation.z;
 					}
-
+					else if([normal.a,normal.b,normal.c].toString() == [5,0,1].toString() || [normal.a,normal.b,normal.c].toString() == [4,5,1].toString() ){
+						click_plane.rotation.x = -Math.PI / 2;
+						click_plane.rotation.y = -cube_array[click_object_index].rotation.z;
+					}
+					else if([normal.a,normal.b,normal.c].toString() == [3,6,4].toString() || [normal.a,normal.b,normal.c].toString() == [1,3,4].toString() ){
+						click_plane.rotation.y = -Math.PI
+					}
 					scene.add( click_plane );
 					click_plane_array.push(click_plane);
 				}
