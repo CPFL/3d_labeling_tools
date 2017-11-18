@@ -509,9 +509,11 @@ function init() {
 			var click_object = ray.intersectObjects(click_plane_array);
 			if ( click_object.length > 0 && bb1[click_object_index].closed==false){
 				var drag_vector = {x:click_object[0].point.x - click_point.x, y:click_object[0].point.y - click_point.y, z:click_object[0].point.z - click_point.z};
-				each_cube_parameters[click_object_index].width = (click_point.x - cube_array[click_object_index].position.x)*drag_vector.x/Math.abs((click_point.x - cube_array[click_object_index].position.x)) + each_cube_parameters[click_object_index].width;
+				var yaw_drag_vector = {x:drag_vector.x * Math.cos(-cube_array[click_object_index].rotation.z) - drag_vector.y * Math.sin(-cube_array[click_object_index].rotation.z), y:drag_vector.x * Math.sin(-cube_array[click_object_index].rotation.z) + drag_vector.y * Math.cos(-cube_array[click_object_index].rotation.z), z:drag_vector.z};
+				var judge_click_point = {x:(click_point.x - cube_array[click_object_index].position.x) * Math.cos(-cube_array[click_object_index].rotation.z) - (click_point.y - cube_array[click_object_index].position.y) * Math.sin(-cube_array[click_object_index].rotation.z), y:(click_point.x - cube_array[click_object_index].position.x) * Math.sin(-cube_array[click_object_index].rotation.z) + (click_point.y - cube_array[click_object_index].position.y) * Math.cos(-cube_array[click_object_index].rotation.z)};
+				each_cube_parameters[click_object_index].width = judge_click_point.x*yaw_drag_vector.x/Math.abs(judge_click_point.x) + each_cube_parameters[click_object_index].width;
 				each_cube_parameters[click_object_index].x = drag_vector.x/2 + each_cube_parameters[click_object_index].x;
-				each_cube_parameters[click_object_index].height = (click_point.y - cube_array[click_object_index].position.y)*drag_vector.y/Math.abs((click_point.y - cube_array[click_object_index].position.y)) + each_cube_parameters[click_object_index].height;
+				each_cube_parameters[click_object_index].height = judge_click_point.y*yaw_drag_vector.y/Math.abs(judge_click_point.y) + each_cube_parameters[click_object_index].height;
 				each_cube_parameters[click_object_index].y = -drag_vector.y/2 + each_cube_parameters[click_object_index].y;
 				each_cube_parameters[click_object_index].depth = (click_point.z - cube_array[click_object_index].position.z)*drag_vector.z/Math.abs((click_point.z - cube_array[click_object_index].position.z)) + each_cube_parameters[click_object_index].depth;
 				each_cube_parameters[click_object_index].z = drag_vector.z/2 + each_cube_parameters[click_object_index].z;
