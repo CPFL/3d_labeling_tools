@@ -470,26 +470,26 @@ function init() {
 					click_plane.position.x = click_point.x;
 					click_plane.position.y = click_point.y;
 					click_plane.position.z = click_point.z;
-					if(click_point.x <= click_cube.position.x - click_cube.scale.x/2){
-						click_plane.rotation.y = -Math.PI / 2;
-					}
-
-					else if(click_point.x >= click_cube.position.x + click_cube.scale.x/2){
-						click_plane.rotation.y = Math.PI / 2;
-					}
-
-					else if(click_point.y <= click_cube.position.y - click_cube.scale.y/2){
+					var normal  = click_object[0].face;
+					if([normal.a,normal.b,normal.c].toString() == [6,3,2].toString() || [normal.a,normal.b,normal.c].toString() == [7,6,2].toString() ){
 						click_plane.rotation.x = Math.PI / 2;
+						click_plane.rotation.y = cube_array[click_object_index].rotation.z;
 					}
-
-					else if(click_point.y >= click_cube.position.y + click_cube.scale.y/2){
+					else if([normal.a,normal.b,normal.c].toString() == [6,7,5].toString() || [normal.a,normal.b,normal.c].toString() == [4,6,5].toString() ){
 						click_plane.rotation.x = -Math.PI / 2;
+						click_plane.rotation.y = -Math.PI / 2 - cube_array[click_object_index].rotation.z;
 					}
-
-					else if(click_point.z <= click_cube.position.z - click_cube.scale.z/2){
-						click_plane.rotation.x = Math.PI;
+					else if([normal.a,normal.b,normal.c].toString() == [0,2,1].toString() || [normal.a,normal.b,normal.c].toString() == [2,3,1].toString() ){
+						click_plane.rotation.x = Math.PI / 2;
+						click_plane.rotation.y = Math.PI / 2 + cube_array[click_object_index].rotation.z;
 					}
-
+					else if([normal.a,normal.b,normal.c].toString() == [5,0,1].toString() || [normal.a,normal.b,normal.c].toString() == [4,5,1].toString() ){
+						click_plane.rotation.x = -Math.PI / 2;
+						click_plane.rotation.y = -cube_array[click_object_index].rotation.z;
+					}
+					else if([normal.a,normal.b,normal.c].toString() == [3,6,4].toString() || [normal.a,normal.b,normal.c].toString() == [1,3,4].toString() ){
+						click_plane.rotation.y = -Math.PI
+					}
 					scene.add( click_plane );
 					click_plane_array.push(click_plane);
 				}
@@ -509,9 +509,11 @@ function init() {
 			var click_object = ray.intersectObjects(click_plane_array);
 			if ( click_object.length > 0 && bb1[click_object_index].closed==false){
 				var drag_vector = {x:click_object[0].point.x - click_point.x, y:click_object[0].point.y - click_point.y, z:click_object[0].point.z - click_point.z};
-				each_cube_parameters[click_object_index].width = (click_point.x - cube_array[click_object_index].position.x)*drag_vector.x/Math.abs((click_point.x - cube_array[click_object_index].position.x)) + each_cube_parameters[click_object_index].width;
+				var yaw_drag_vector = {x:drag_vector.x * Math.cos(-cube_array[click_object_index].rotation.z) - drag_vector.y * Math.sin(-cube_array[click_object_index].rotation.z), y:drag_vector.x * Math.sin(-cube_array[click_object_index].rotation.z) + drag_vector.y * Math.cos(-cube_array[click_object_index].rotation.z), z:drag_vector.z};
+				var judge_click_point = {x:(click_point.x - cube_array[click_object_index].position.x) * Math.cos(-cube_array[click_object_index].rotation.z) - (click_point.y - cube_array[click_object_index].position.y) * Math.sin(-cube_array[click_object_index].rotation.z), y:(click_point.x - cube_array[click_object_index].position.x) * Math.sin(-cube_array[click_object_index].rotation.z) + (click_point.y - cube_array[click_object_index].position.y) * Math.cos(-cube_array[click_object_index].rotation.z)};
+				each_cube_parameters[click_object_index].width = judge_click_point.x*yaw_drag_vector.x/Math.abs(judge_click_point.x) + each_cube_parameters[click_object_index].width;
 				each_cube_parameters[click_object_index].x = drag_vector.x/2 + each_cube_parameters[click_object_index].x;
-				each_cube_parameters[click_object_index].height = (click_point.y - cube_array[click_object_index].position.y)*drag_vector.y/Math.abs((click_point.y - cube_array[click_object_index].position.y)) + each_cube_parameters[click_object_index].height;
+				each_cube_parameters[click_object_index].height = judge_click_point.y*yaw_drag_vector.y/Math.abs(judge_click_point.y) + each_cube_parameters[click_object_index].height;
 				each_cube_parameters[click_object_index].y = -drag_vector.y/2 + each_cube_parameters[click_object_index].y;
 				each_cube_parameters[click_object_index].depth = (click_point.z - cube_array[click_object_index].position.z)*drag_vector.z/Math.abs((click_point.z - cube_array[click_object_index].position.z)) + each_cube_parameters[click_object_index].depth;
 				each_cube_parameters[click_object_index].z = drag_vector.z/2 + each_cube_parameters[click_object_index].z;
