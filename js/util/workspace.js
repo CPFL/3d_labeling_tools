@@ -160,8 +160,8 @@ class WorkSpace {
 
     // Get informations of workspace (call this for initialization)
     getWorkFiles() {
-	this.workBlob = "input" // "https://devrosbag.blob.core.windows.net/labeltool/3d_label_test";
-	this.curFile = 100; // For test (please make labeling tool start with frame:100
+	this.workBlob = "input"; // "https://devrosbag.blob.core.windows.net/labeltool/3d_label_test";
+	this.curFile = 1; // For test (please make labeling tool start with frame:1
 	/* var rawFile = new XMLHttpRequest();
 	   rawFile.open("GET", "https://devrosbag.blob.core.windows.net/labeltool/3d_label_test/ImageSets/Main/trainval.txt", false);
 	   rawFile.onreadystatechange = function (){
@@ -282,25 +282,7 @@ class WorkSpace {
 	this.showData();
     }
 
-    /* archiveWorkFiles() {
-       document.getElementById("overlay-text").innerHTML="Updating Database...";
-       $(function() {
-       $("#label-tool-status-overlay").fadeIn();
-       });
-       if (this.isModified()) {
-       this.setAnnotations();
-       }
-       textBox.value = "Updating database...";
-       $.ajax({
-       url: '/labeling_tool/upload_dataset/',
-       type: 'POST',
-       dataType: 'json',
-       data: {images: this.fileList.length,
-       label_id: this.labelId},
-       complete: function(res) {
-       textBox.value = "Database updated!";
-       location.href = "label_select";
-       }.bind(this)
-       })
-     * }*/
+    // Archive and update database
+    archiveWorkFiles() {
+    }
 }
