@@ -24,7 +24,7 @@ Click AddBoundingBox Button. You can add New Bounding Box.
 
 ### GUI mode
 
-Edit position(X, Y, Z, delta x, delta y, delta z) and scale(width, height, depth) on GUI Editor.
+Edit position(X, Y, Z, delta x, delta y, delta z and yaw) and scale(width, height, depth) on GUI Editor.
 
 ![Select Bounding Box](./demo/edit_bbox_gui.gif)
 
