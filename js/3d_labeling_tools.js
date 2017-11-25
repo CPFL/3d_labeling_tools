@@ -3,7 +3,7 @@
 //   implement TODO in workspace.js
 //   call workspace.nextFile() or previousFile() when changing frame
 //   call workspace.archiveWorkFiles() when labeling is end (Add 'update database' button)
-//   use workspace.bboxes instead of each_cube_parameters
+//   use workspace.bboxes instead of workspace.bboxes
 //   use workspace.originalBboxes instead of read_cube_parameters
 //   ...
 
@@ -16,7 +16,6 @@ var gui_tag = [];
 var gui = new dat.GUI();
 var CameraExMat = [];
 var cube_array = [];
-var each_cube_parameters = [];
 var read_cube_parameters = [];
 var bb1 = [];
 var folder_position = [];
@@ -35,7 +34,6 @@ var now_flame = 0
 var ground_mesh
 var image_array = []
 var bird_view_flag = false;
-var workspace = new WorkSpace("PCD");
 var parameters = {
     i : -1,
     flame : now_flame,
@@ -207,7 +205,7 @@ function camera_view(){
 
 //read semilabeling text file
 function readTextFile(file){
-    workspace.getAnnotations();
+    //workspace.getAnnotations();
     /* var rawFile = new XMLHttpRequest();
      * rawFile.open("GET", file, false);
      * rawFile.onreadystatechange = function (){
@@ -326,7 +324,7 @@ function addbbox_gui(num){
 //add gui number tag to integrate 2d labeling result
 function gui_add_tag(){
     for (var i = 0 ; i < numbertag_list.length ; i++){
-	tag = bb1[i].add( each_cube_parameters[i], 'numbertag' ,numbertag_list).name("BoundingBoxTag");
+	tag = bb1[i].add( workspace.bboxes[i], 'numbertag' ,numbertag_list).name("BoundingBoxTag");
 	gui_tag.push(tag)
     }
 }
@@ -339,7 +337,7 @@ function gui_reset_tag(){
 
     gui_tag = [];
     for (var i = 0 ; i < numbertag_list.length ; i++){
-	tag = bb1[i].add( each_cube_parameters[i], 'numbertag' ,numbertag_list).name("BoundingBoxTag");
+	tag = bb1[i].add( workspace.bboxes[i], 'numbertag' ,numbertag_list).name("BoundingBoxTag");
 	gui_tag.push(tag)
     }
 }
@@ -347,23 +345,23 @@ function gui_reset_tag(){
 //reset cube patameter and position
 function resetCube(num)
 {
-    each_cube_parameters[num].x = read_cube_parameters[num].x;
-    each_cube_parameters[num].y = read_cube_parameters[num].y;
-    each_cube_parameters[num].z = read_cube_parameters[num].z;
-    each_cube_parameters[num].yaw = read_cube_parameters[num].yaw;
-    each_cube_parameters[num].delta_x = read_cube_parameters[num].delta_x;
-    each_cube_parameters[num].delta_y = read_cube_parameters[num].delta_y;
-    each_cube_parameters[num].delta_z = read_cube_parameters[num].delta_z;
-    each_cube_parameters[num].width = read_cube_parameters[num].width;
-    each_cube_parameters[num].height = read_cube_parameters[num].height;
-    each_cube_parameters[num].depth = read_cube_parameters[num].depth;
-    cube_array[num].position.x = each_cube_parameters[num].x;
-    cube_array[num].position.y = -each_cube_parameters[num].y;
-    cube_array[num].position.z = each_cube_parameters[num].z;
-    cube_array[num].rotation.z = each_cube_parameters[num].yaw;
-    cube_array[num].scale.x = each_cube_parameters[num].width;
-    cube_array[num].scale.y = each_cube_parameters[num].height;
-    cube_array[num].scale.z = each_cube_parameters[num].depth;
+    workspace.bboxes[num].x = read_cube_parameters[num].x;
+    workspace.bboxes[num].y = read_cube_parameters[num].y;
+    workspace.bboxes[num].z = read_cube_parameters[num].z;
+    workspace.bboxes[num].yaw = read_cube_parameters[num].yaw;
+    workspace.bboxes[num].delta_x = read_cube_parameters[num].delta_x;
+    workspace.bboxes[num].delta_y = read_cube_parameters[num].delta_y;
+    workspace.bboxes[num].delta_z = read_cube_parameters[num].delta_z;
+    workspace.bboxes[num].width = read_cube_parameters[num].width;
+    workspace.bboxes[num].height = read_cube_parameters[num].height;
+    workspace.bboxes[num].depth = read_cube_parameters[num].depth;
+    cube_array[num].position.x = workspace.bboxes[num].x;
+    cube_array[num].position.y = -workspace.bboxes[num].y;
+    cube_array[num].position.z = workspace.bboxes[num].z;
+    cube_array[num].rotation.z = workspace.bboxes[num].yaw;
+    cube_array[num].scale.x = workspace.bboxes[num].width;
+    cube_array[num].scale.y = workspace.bboxes[num].height;
+    cube_array[num].scale.z = workspace.bboxes[num].depth;
 }
 
 //change window size
@@ -414,8 +412,8 @@ function result(num) {
     alert(cube_array[num].scale.x)//scale.x
     alert(cube_array[num].scale.y)//scale.y
     alert(cube_array[num].scale.z)//scale.z
-    alert(each_cube_parameters[num].numbertag)//BoundingBox Number Tag
-    alert(each_cube_parameters[num].label) //BoundingBox Attribute Tag
+    alert(workspace.bboxes[num].numbertag)//BoundingBox Number Tag
+    alert(workspace.bboxes[num].label) //BoundingBox Attribute Tag
 }
 
 function init() {
@@ -517,19 +515,19 @@ function init() {
 		var drag_vector = {x:click_object[0].point.x - click_point.x, y:click_object[0].point.y - click_point.y, z:click_object[0].point.z - click_point.z};
 		var yaw_drag_vector = {x:drag_vector.x * Math.cos(-cube_array[click_object_index].rotation.z) - drag_vector.y * Math.sin(-cube_array[click_object_index].rotation.z), y:drag_vector.x * Math.sin(-cube_array[click_object_index].rotation.z) + drag_vector.y * Math.cos(-cube_array[click_object_index].rotation.z), z:drag_vector.z};
 		var judge_click_point = {x:(click_point.x - cube_array[click_object_index].position.x) * Math.cos(-cube_array[click_object_index].rotation.z) - (click_point.y - cube_array[click_object_index].position.y) * Math.sin(-cube_array[click_object_index].rotation.z), y:(click_point.x - cube_array[click_object_index].position.x) * Math.sin(-cube_array[click_object_index].rotation.z) + (click_point.y - cube_array[click_object_index].position.y) * Math.cos(-cube_array[click_object_index].rotation.z)};
-		each_cube_parameters[click_object_index].width = judge_click_point.x*yaw_drag_vector.x/Math.abs(judge_click_point.x) + each_cube_parameters[click_object_index].width;
-		each_cube_parameters[click_object_index].x = drag_vector.x/2 + each_cube_parameters[click_object_index].x;
-		each_cube_parameters[click_object_index].height = judge_click_point.y*yaw_drag_vector.y/Math.abs(judge_click_point.y) + each_cube_parameters[click_object_index].height;
-		each_cube_parameters[click_object_index].y = -drag_vector.y/2 + each_cube_parameters[click_object_index].y;
-		each_cube_parameters[click_object_index].depth = (click_point.z - cube_array[click_object_index].position.z)*drag_vector.z/Math.abs((click_point.z - cube_array[click_object_index].position.z)) + each_cube_parameters[click_object_index].depth;
-		each_cube_parameters[click_object_index].z = drag_vector.z/2 + each_cube_parameters[click_object_index].z;
-		cube_array[click_object_index].position.x = each_cube_parameters[click_object_index].x;
-		cube_array[click_object_index].position.y = -each_cube_parameters[click_object_index].y;
-		cube_array[click_object_index].position.z = each_cube_parameters[click_object_index].z;
-		cube_array[click_object_index].rotation.z = each_cube_parameters[click_object_index].yaw;
-		cube_array[click_object_index].scale.x = each_cube_parameters[click_object_index].width;
-		cube_array[click_object_index].scale.y = each_cube_parameters[click_object_index].height;
-		cube_array[click_object_index].scale.z = each_cube_parameters[click_object_index].depth;
+		workspace.bboxes[click_object_index].width = judge_click_point.x*yaw_drag_vector.x/Math.abs(judge_click_point.x) + workspace.bboxes[click_object_index].width;
+		workspace.bboxes[click_object_index].x = drag_vector.x/2 + workspace.bboxes[click_object_index].x;
+		workspace.bboxes[click_object_index].height = judge_click_point.y*yaw_drag_vector.y/Math.abs(judge_click_point.y) + workspace.bboxes[click_object_index].height;
+		workspace.bboxes[click_object_index].y = -drag_vector.y/2 + workspace.bboxes[click_object_index].y;
+		workspace.bboxes[click_object_index].depth = (click_point.z - cube_array[click_object_index].position.z)*drag_vector.z/Math.abs((click_point.z - cube_array[click_object_index].position.z)) + workspace.bboxes[click_object_index].depth;
+		workspace.bboxes[click_object_index].z = drag_vector.z/2 + workspace.bboxes[click_object_index].z;
+		cube_array[click_object_index].position.x = workspace.bboxes[click_object_index].x;
+		cube_array[click_object_index].position.y = -workspace.bboxes[click_object_index].y;
+		cube_array[click_object_index].position.z = workspace.bboxes[click_object_index].z;
+		cube_array[click_object_index].rotation.z = workspace.bboxes[click_object_index].yaw;
+		cube_array[click_object_index].scale.x = workspace.bboxes[click_object_index].width;
+		cube_array[click_object_index].scale.y = workspace.bboxes[click_object_index].height;
+		cube_array[click_object_index].scale.z = workspace.bboxes[click_object_index].depth;
 	    }
 	    if(click_flag==true){
 		click_plane_array[0].visible = false;
@@ -568,7 +566,7 @@ function init() {
 	    canvas2D.style.display = "none"
 	}
     });
-    //result(0, cube_array, each_cube_parameters)
+    //result(0, cube_array, workspace.bboxes)
 
     canvas2D = document.getElementById('canvas2d');
     ctx = canvas2D.getContext('2d');

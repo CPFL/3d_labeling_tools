@@ -68,6 +68,7 @@ class WorkSpace {
 	    }
 	    this.bboxes = [];
 	    for (var i in annotations) {
+	    alert("ok")
 		if (i != "remove") {
 		    var xmin = annotations[i].left;
 		    var ymin = annotations[i].top;
@@ -205,12 +206,8 @@ class WorkSpace {
 		    var str_list = allText.split("\n");
 		    for (var i = 0 ; i < str_list.length ; i++) {
 			var str = str_list[i].split(",");
+
 			if(str.length == 15){
-			    readfile_mat =
-				MaxProd(CameraExMat,[parseFloat(str[11]),
-						     parseFloat(str[12]),
-						     parseFloat(str[13]),
-						     1]);
 			    res.push({label: str[0],
 				      truncated: str[1],
 				      occluded: str[2],
