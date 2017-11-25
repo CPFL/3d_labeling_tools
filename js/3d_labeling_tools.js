@@ -1,10 +1,3 @@
-// I/O module : util/workspace.js
-// TODO:
-//   implement TODO in workspace.js
-//   call workspace.nextFile() or previousFile() when changing frame
-//   call workspace.archiveWorkFiles() when labeling is end (Add 'update database' button)
-//   ...
-
 var canvas2D,stats,image_2d,ctx;
 var camera, controls, scene, renderer;
 var cube;

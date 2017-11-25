@@ -1,4 +1,8 @@
-// Instantiate with WorkSpace("pcd")
+// I/O module : util/workspace.js
+// TODO:
+//   implement TODO in workspace.js
+
+//   ...// Instantiate with WorkSpace("pcd")
 class WorkSpace {
     constructor(dataType) {
 	this.classColor = {car: "blue", motorbike: "green", pedestrian: "red", bus: "yellow", truck: "white", cyclist: "orange", train: "cyan", obstacle: "purple", stop_signal: "red", wait_signal: "yellow", go_signal: "green"};
