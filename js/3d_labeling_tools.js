@@ -64,6 +64,9 @@ var parameters = {
     },
     camera_view : function() {
 	camera_view();
+    },
+    update_database : function() {
+    workspace.archiveWorkFiles();
     }
     //,result: function() {result(1,cube_array);}
 };
@@ -493,8 +496,9 @@ function init() {
     gui.add(parameters, 'flame').name("Nowflame").listen();
     gui.add(parameters, 'next').name("NextData");
     gui.add(parameters, 'before').name("BeforeData");
-    gui.add(parameters,'bird_view').name("BirdView");
-    gui.add(parameters,'camera_view').name("CameraView");
+    gui.add(parameters, 'update_database').name("UploadDatabase");
+    gui.add(parameters, 'bird_view').name("BirdView");
+    gui.add(parameters, 'camera_view').name("CameraView");
     var ImageCheck = gui.add(parameters, 'image_checkbox').name("Image").listen();
     //gui.add(parameters,'result').name("result");
 

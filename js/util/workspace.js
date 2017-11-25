@@ -57,6 +57,9 @@ class WorkSpace {
 	    image_2d.onload = function() {
 		ctx.drawImage(image_2d, 0, 0);
 	    }
+	    if(parameters.image_checkbox==false){
+	    	image_array[0].visible = false;
+	    }
 	    this.getAnnotations();
 	}
     }
@@ -288,10 +291,14 @@ class WorkSpace {
     numbertag_list = [];
     parameters.i = -1;
     bb1 = [];
+    numbertag_list = [];
+    folder_position = [];
+    folder_size = [];
   	this.showData();
     }
 
     // Archive and update database
     archiveWorkFiles() {
+    	alert("upload database")
     }
 }
