@@ -3,8 +3,6 @@
 //   implement TODO in workspace.js
 //   call workspace.nextFile() or previousFile() when changing frame
 //   call workspace.archiveWorkFiles() when labeling is end (Add 'update database' button)
-//   use workspace.bboxes instead of workspace.bboxes
-//   use workspace.originalBboxes instead of read_cube_parameters
 //   ...
 
 var canvas2D,stats,image_2d,ctx;
@@ -16,7 +14,6 @@ var gui_tag = [];
 var gui = new dat.GUI();
 var CameraExMat = [];
 var cube_array = [];
-var read_cube_parameters = [];
 var bb1 = [];
 var folder_position = [];
 var folder_size = [];
@@ -345,16 +342,16 @@ function gui_reset_tag(){
 //reset cube patameter and position
 function resetCube(num)
 {
-    workspace.bboxes[num].x = read_cube_parameters[num].x;
-    workspace.bboxes[num].y = read_cube_parameters[num].y;
-    workspace.bboxes[num].z = read_cube_parameters[num].z;
-    workspace.bboxes[num].yaw = read_cube_parameters[num].yaw;
-    workspace.bboxes[num].delta_x = read_cube_parameters[num].delta_x;
-    workspace.bboxes[num].delta_y = read_cube_parameters[num].delta_y;
-    workspace.bboxes[num].delta_z = read_cube_parameters[num].delta_z;
-    workspace.bboxes[num].width = read_cube_parameters[num].width;
-    workspace.bboxes[num].height = read_cube_parameters[num].height;
-    workspace.bboxes[num].depth = read_cube_parameters[num].depth;
+    workspace.bboxes[num].x = workspace.originalBboxes[num].x;
+    workspace.bboxes[num].y = workspace.originalBboxes[num].y;
+    workspace.bboxes[num].z = workspace.originalBboxes[num].z;
+    workspace.bboxes[num].yaw = workspace.originalBboxes[num].yaw;
+    workspace.bboxes[num].delta_x = workspace.originalBboxes[num].delta_x;
+    workspace.bboxes[num].delta_y = workspace.originalBboxes[num].delta_y;
+    workspace.bboxes[num].delta_z = workspace.originalBboxes[num].delta_z;
+    workspace.bboxes[num].width = workspace.originalBboxes[num].width;
+    workspace.bboxes[num].height = workspace.originalBboxes[num].height;
+    workspace.bboxes[num].depth = workspace.originalBboxes[num].depth;
     cube_array[num].position.x = workspace.bboxes[num].x;
     cube_array[num].position.y = -workspace.bboxes[num].y;
     cube_array[num].position.z = workspace.bboxes[num].z;
