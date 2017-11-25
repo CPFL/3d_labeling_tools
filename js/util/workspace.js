@@ -25,8 +25,9 @@ class WorkSpace {
 	    this.getAnnotations();
 	} else {
 	    // TODO
+	    parameters.flame = this.curFile;
 	    var img_url = this.workBlob + '/JPEGImages/'
-			+ ('000000' + parameters.flame).slice(-6) + '.jpg';
+			+ this.fileList[this.curFile] + '.jpg';
 	    THREE.ImageUtils.crossOrigin = '';
 	    var image =  THREE.ImageUtils.loadTexture(img_url);
 	    var material = new THREE.MeshBasicMaterial({map: image});
@@ -34,7 +35,7 @@ class WorkSpace {
 	    var image_plane = new THREE.Mesh(geometry, material);
 	    var pcd_loader = new THREE.PCDLoader();
 	    var pcd_url = this.workBlob + '/PCDPoints/'
-			+ ('000000' + parameters.flame).slice(-6) + '/all.pcd';
+			+ this.fileList[this.curFile] + '/all.pcd';
 	    pcd_loader.load(pcd_url, function (mesh) {
 		scene.add(mesh);
 		ground_mesh = mesh;
@@ -52,7 +53,7 @@ class WorkSpace {
 	    image_2d = new Image();
 	    image_2d.crossOrigin = 'Anonymous'
 	    image_2d.src = this.workBlob + '/JPEGImages/'
-			 + ('000000' + parameters.flame).slice(-6) + '.jpg?' + new Date().getTime();
+			 + this.fileList[this.curFile] + '.jpg?' + new Date().getTime();
 	    image_2d.onload = function() {
 		ctx.drawImage(image_2d, 0, 0);
 	    }
@@ -68,7 +69,6 @@ class WorkSpace {
 	    }
 	    this.bboxes = [];
 	    for (var i in annotations) {
-	    alert("ok")
 		if (i != "remove") {
 		    var xmin = annotations[i].left;
 		    var ymin = annotations[i].top;
@@ -163,7 +163,7 @@ class WorkSpace {
     getWorkFiles() {
 	this.workBlob = "input"; // "https://devrosbag.blob.core.windows.net/labeltool/3d_label_test";
 	this.curFile = 1; // For test (please make labeling tool start with frame:1
-	/* var rawFile = new XMLHttpRequest();
+		/* var rawFile = new XMLHttpRequest();
 	   rawFile.open("GET", "https://devrosbag.blob.core.windows.net/labeltool/3d_label_test/ImageSets/Main/trainval.txt", false);
 	   rawFile.onreadystatechange = function (){
 	   if(rawFile.readyState === 4){
@@ -206,7 +206,6 @@ class WorkSpace {
 		    var str_list = allText.split("\n");
 		    for (var i = 0 ; i < str_list.length ; i++) {
 			var str = str_list[i].split(",");
-
 			if(str.length == 15){
 			    res.push({label: str[0],
 				      truncated: str[1],
@@ -276,7 +275,20 @@ class WorkSpace {
 	if (this.dataType == "JPEG") {
 	    imageBox.value = (this.curFile+1) + "/" + this.fileList.length; //TODO
 	}
-	this.showData();
+	ground_mesh.visible = false;
+    image_array[0].visible = false;
+
+    for (var k = 0 ; k < parameters.i + 1 ; k++){
+	    gui.removeFolder('BoundingBox'+String(k));
+	    cube_array[k].visible=false;
+	}
+    this.originalBboxes = [];
+    this.bboxes = [];
+	cube_array = [];
+    numbertag_list = [];
+    parameters.i = -1;
+    bb1 = [];
+  	this.showData();
     }
 
     // Archive and update database

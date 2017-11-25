@@ -54,22 +54,10 @@ var parameters = {
 	gui_reset_tag();
     },
     next : function() {
-	if (parameters.flame == workspace.fileList.length - 1) {
-	    return;
-	}
-	parameters.flame = parameters.flame + 1;
-	ground_mesh.visible = false;
 	workspace.nextFile();
-	/* data_load();*/
     },
     before : function() {
-	if (parameters.flame == 0) {
-	    return;
-	}
-	parameters.flame = parameters.flame - 1;
-	ground_mesh.visible = false;
 	workspace.previousFile();
-	/* data_load();*/
     },
     bird_view : function() {
 	bird_view();
@@ -198,44 +186,6 @@ function camera_view(){
     image_array[0].visible = true;
     canvas2D.style.display = "none";
     bird_view_flag = false;
-}
-
-//read semilabeling text file
-function readTextFile(file){
-    //workspace.getAnnotations();
-    /* var rawFile = new XMLHttpRequest();
-     * rawFile.open("GET", file, false);
-     * rawFile.onreadystatechange = function (){
-       if(rawFile.readyState === 4){
-       if(rawFile.status === 200 || rawFile.status == 0){
-       var allText = rawFile.responseText;
-       var str_list = allText.split("\n")
-       for (var i = 0 ; i < str_list.length ; i++){
-       var str = str_list[i].split(" ")
-       if(str.length == 15){
-       readfile_mat = MaxProd(CameraExMat,[parseFloat(str[11]),parseFloat(str[12]),parseFloat(str[13]),1]);
-       var readfile_parameters ={
-       x : readfile_mat[0],
-       y : -readfile_mat[1],
-       z : readfile_mat[2],
-       delta_x : 0,
-       delta_y : 0,
-       delta_z : 0,
-       width : parseFloat(str[8]),
-       height : parseFloat(str[9]),
-       depth : parseFloat(str[10]),
-       yaw : parseFloat(str[14]),
-       numbertag : parameters.i + 1,
-       label : str[0]
-       };
-       addbbox(readfile_parameters);
-       }
-       }
-       }
-       }
-     * }
-
-     * rawFile.send(null);*/
 }
 
 //add new bounding box
@@ -550,8 +500,6 @@ function init() {
 
     readYAMLFile(workspace.workBlob + "/calibration.yml");
     data_load(parameters);
-    readTextFile(workspace.workBlob + '/Annotations/'
-	       + ('000000' + parameters.flame).slice(-6) + '.txt');
     gui.open();
     gui_add_tag();
     ImageCheck.onChange(function(value) {
