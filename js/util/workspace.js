@@ -1,6 +1,8 @@
-// I/O module : util/workspace.js
 // TODO:
-//   implement TODO in workspace.js
+//   implement packAnnotation()
+//	 implement JPEG feature
+//   implement archiveWorkFiles()
+//   check result[]
 
 //   ...// Instantiate with WorkSpace("pcd")
 class WorkSpace {
@@ -28,7 +30,6 @@ class WorkSpace {
 	    addEventsToImage();
 	    this.getAnnotations();
 	} else {
-	    // TODO
 	    parameters.flame = this.curFile;
 	    var img_url = this.workBlob + '/JPEGImages/'
 			+ this.fileList[this.curFile] + '.jpg';
@@ -93,7 +94,6 @@ class WorkSpace {
 		}
 	    }
 	} else {
-	    // TODO
 	    this.bboxes = [];
 	    for (var i in annotations) {
 		if (i != "remove") {
