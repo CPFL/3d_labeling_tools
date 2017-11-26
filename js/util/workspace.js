@@ -151,7 +151,28 @@ class WorkSpace {
 	    }
 	    return annotations;
 	} else {
-	    // TODO
+	    var annotations = [];
+	    for (var i = 0; i < this.bboxes.length; ++i) {
+	    result_mat = MaxProd(invMax(CameraExMat),[cube_array[i].position.x,cube_array[i].position.y,cube_array[i].position.z,1]);
+	    //TODO BoundingBox Number Tag workspace.bboxes[num].numbertag
+		var bbox = this.bboxes[i];
+		annotations.push({label: workspace.bboxes[i].label,
+				  truncated: 0,//TODO
+				  occluded: 0,//TODO
+				  alpha: 0,//TODO
+				  left: minPos[0],//TODO
+				  top: minPos[1],//TODO
+				  right: maxPos[0],//TODO
+				  bottom: maxPos[1],//TODO
+				  height: cube_array[i].scale.y,
+				  width: cube_array[i].scale.x,
+				  length: cube_array[i].scale.z,
+				  x: result_mat[0],
+				  y: result_mat[1],
+				  z: result_mat[2],
+				  rotation_y: cube_array[i].rotation.z});
+	    }
+	    return annotations;
 	}
     }
 
