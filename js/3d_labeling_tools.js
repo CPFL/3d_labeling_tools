@@ -111,8 +111,14 @@ function readYAMLFile(filename) {
 }
 
 //calicurate inverce matrix
-function invMax(inMax,outMax){
-    var a = inMax;
+function invMax(inMax){
+    var a = new Array(4);
+    for(i = 0 ; i < 4 ; i++ ){
+    a[i] = new Array(4);
+    for(j = 0; j < 4; j++){
+        a[i][j] = inMax[i][j];
+    }
+    }
     var c = a.length;
     var buf;
     var i, j, k;
@@ -343,20 +349,6 @@ function animate() {
 	    cube_array[i].material.color.setHex( 0x008866 );
 	}
     }
-}
-
-//alert labeling result
-function result(num) {
-    result_mat = MaxProd(invMax(CameraExMat),[cube_array[num].position.x,cube_array[num].position.y,cube_array[num].position.z,1]);
-    alert(result_mat[0])//position.x
-    alert(result_mat[1])//position.y
-    alert(result_mat[2])//position.z
-    alert(cube_array[num].rotation.z)//yaw
-    alert(cube_array[num].scale.x)//scale.x
-    alert(cube_array[num].scale.y)//scale.y
-    alert(cube_array[num].scale.z)//scale.z
-    alert(workspace.bboxes[num].numbertag)//BoundingBox Number Tag
-    alert(workspace.bboxes[num].label) //BoundingBox Attribute Tag
 }
 
 function init() {

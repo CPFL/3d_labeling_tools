@@ -1,8 +1,9 @@
 // TODO:
-//   implement packAnnotation()
+//   implement alpha of packAnnotation()
+//   implement JPEG feature of packAnnotation()
 //	 implement JPEG feature
-//   implement archiveWorkFiles()
-//   check result[]
+//   implement server sending feature of archiveWorkFiles()
+//   implement branch feature bbox reader
 
 //   ...// Instantiate with WorkSpace("pcd")
 class WorkSpace {
@@ -153,17 +154,17 @@ class WorkSpace {
 	} else {
 	    var annotations = [];
 	    for (var i = 0; i < this.bboxes.length; ++i) {
-	    result_mat = MaxProd(invMax(CameraExMat),[cube_array[i].position.x,cube_array[i].position.y,cube_array[i].position.z,1]);
-	    //TODO BoundingBox Number Tag workspace.bboxes[num].numbertag
+	    var result_mat = MaxProd(invMat(CameraExMat),[cube_array[i].position.x,cube_array[i].position.y,cube_array[i].position.z,1]);
+	    //TODO BoundingBox Number Tag workspace.bboxes[i].numbertag
 		var bbox = this.bboxes[i];
 		annotations.push({label: workspace.bboxes[i].label,
-				  truncated: 0,//TODO
-				  occluded: 0,//TODO
-				  alpha: 0,//TODO
-				  left: minPos[0],//TODO
-				  top: minPos[1],//TODO
-				  right: maxPos[0],//TODO
-				  bottom: maxPos[1],//TODO
+				  truncated: 0,
+				  occluded: 3,
+				  alpha: 0,//TODO 
+				  left: 0,//TODO please input image feature
+				  top: 0,//TODO
+				  right: 0,//TODO
+				  bottom: 0,//TODO
 				  height: cube_array[i].scale.y,
 				  width: cube_array[i].scale.x,
 				  length: cube_array[i].scale.z,
@@ -178,7 +179,7 @@ class WorkSpace {
 
     // Send annotations to server if (isModified())
     isModified() {
-	return this.bboxes.toString() != this.originalBboxes.toString();
+	return this.bboxes.toString() == this.originalBboxes.toString();//test
     }
     // <---
 
@@ -324,6 +325,7 @@ class WorkSpace {
 
     // Archive and update database
     archiveWorkFiles() {
-    	alert("upload database")
+    	var annotations_result = this.results[1];
+    	alert(annotations_result)
     }
 }
