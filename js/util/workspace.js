@@ -19,6 +19,7 @@ class WorkSpace {
 	this.results = []; // Replacement of azure blob for output
 	this.originalBboxes = []; // For checking modified or not
 	this.hold_flag = false; //Hold bbox flag
+	this.labeling_files = [];
     }
 
     // Use prototype? --->
@@ -177,11 +178,6 @@ class WorkSpace {
 	    return annotations;
 	}
     }
-
-    // Send annotations to server if (isModified())
-    isModified() {
-	return this.bboxes.toString() == this.originalBboxes.toString();//test
-    }
     // <---
 
     // Call this first to specify target label
@@ -225,6 +221,8 @@ class WorkSpace {
 
     // Get annotations from server
     getAnnotations() {
+	if(this.labeling_files.indexOf(this.fileList[this.curFile]) == -1){
+		this.labeling_files.push(this.fileList[this.curFile])
 	var res = [];
 	var fileName = this.fileList[this.curFile] + ".txt";
 	var rawFile = new XMLHttpRequest();
@@ -258,7 +256,10 @@ class WorkSpace {
 	    }
 	}
 	rawFile.send(null);
-	this.loadAnnotations(res);
+	this.loadAnnotations(res);}
+	else{
+	this.loadAnnotations(this.results[this.curFile]);
+	}
     }
 
     // Output annotations
@@ -273,9 +274,7 @@ class WorkSpace {
 
     previousFile() {
 	if (this.curFile > 0) {
-	    if (this.isModified()) {
 		this.setAnnotations();
-	    }
 	    this.curFile--;
 	    this.onChangeFile();
 	}
@@ -283,9 +282,7 @@ class WorkSpace {
 
     nextFile() {
 	if (this.curFile < this.fileList.length-1) {
-	    if (this.isModified()) {
 		this.setAnnotations();
-	    }
 	    this.curFile++;
 	    this.onChangeFile();
 	}
