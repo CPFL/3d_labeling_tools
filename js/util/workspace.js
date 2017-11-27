@@ -3,7 +3,6 @@
 //	 implement JPEG feature
 //   implement server sending feature of archiveWorkFiles()
 //   implement branch feature bbox reader
-//   check isModified()
 
 //   ...// Instantiate with WorkSpace("pcd")
 class WorkSpace {
@@ -68,7 +67,23 @@ class WorkSpace {
 	    if(parameters.image_checkbox==false){
 	    	image_array[0].visible = false;
 	    }
-	    this.getAnnotations();
+
+    	if(this.hold_flag==false){
+	    	for (var k = 0 ; k < parameters.i + 1 ; k++){
+		    	gui.removeFolder('BoundingBox'+String(k));
+		    	cube_array[k].visible=false;
+			}
+		    this.originalBboxes = [];
+		    this.bboxes = [];
+			cube_array = [];
+		    numbertag_list = [];
+		    bb1 = [];
+		    numbertag_list = [];
+		    folder_position = [];
+		    folder_size = [];
+		    parameters.i = -1;
+		    this.getAnnotations();
+		}
 	}
     }
 
@@ -221,45 +236,46 @@ class WorkSpace {
 
     // Get annotations from server
     getAnnotations() {
-	if(this.labeling_files.indexOf(this.fileList[this.curFile]) == -1){
-		this.labeling_files.push(this.fileList[this.curFile])
-	var res = [];
-	var fileName = this.fileList[this.curFile] + ".txt";
-	var rawFile = new XMLHttpRequest();
-	rawFile.open("GET", this.workBlob + '/Annotations/' + fileName, false);
-	rawFile.onreadystatechange = function (){
-	    if(rawFile.readyState === 4){
-		if(rawFile.status === 200 || rawFile.status == 0) {
-		    var allText = rawFile.responseText;
-		    var str_list = allText.split("\n");
-		    for (var i = 0 ; i < str_list.length ; i++) {
-			var str = str_list[i].split(",");
-			if(str.length == 15){
-			    res.push({label: str[0],
-				      truncated: str[1],
-				      occluded: str[2],
-				      alpha: str[3],
-				      left: str[4],
-				      top: str[5],
-				      right: str[6],
-				      bottom: str[7],
-				      height: str[8],
-				      width: str[9],
-				      length:str[10],
-				      x: str[11],
-				      y: str[12],
-				      z: str[13],
-				      rotation_y: str[14]});
+		if(this.labeling_files.indexOf(this.fileList[this.curFile]) == -1){
+			this.labeling_files.push(this.fileList[this.curFile])
+			var res = [];
+			var fileName = this.fileList[this.curFile] + ".txt";
+			var rawFile = new XMLHttpRequest();
+			rawFile.open("GET", this.workBlob + '/Annotations/' + fileName, false);
+			rawFile.onreadystatechange = function (){
+			    if(rawFile.readyState === 4){
+				if(rawFile.status === 200 || rawFile.status == 0) {
+				    var allText = rawFile.responseText;
+				    var str_list = allText.split("\n");
+				    for (var i = 0 ; i < str_list.length ; i++) {
+					var str = str_list[i].split(",");
+					if(str.length == 15){
+					    res.push({label: str[0],
+						      truncated: str[1],
+						      occluded: str[2],
+						      alpha: str[3],
+						      left: str[4],
+						      top: str[5],
+						      right: str[6],
+						      bottom: str[7],
+						      height: str[8],
+						      width: str[9],
+						      length:str[10],
+						      x: str[11],
+						      y: str[12],
+						      z: str[13],
+						      rotation_y: str[14]});
+					}
+				    }
+				}
+			    }
 			}
-		    }
+			rawFile.send(null);
+			this.loadAnnotations(res);
 		}
-	    }
-	}
-	rawFile.send(null);
-	this.loadAnnotations(res);}
-	else{
-	this.loadAnnotations(this.results[this.curFile]);
-	}
+		else{
+			this.loadAnnotations(this.results[this.curFile]);
+		}
     }
 
     // Output annotations
@@ -304,20 +320,6 @@ class WorkSpace {
 	}
 	ground_mesh.visible = false;
     image_array[0].visible = false;
-
-    for (var k = 0 ; k < parameters.i + 1 ; k++){
-	    gui.removeFolder('BoundingBox'+String(k));
-	    cube_array[k].visible=false;
-	}
-    this.originalBboxes = [];
-    this.bboxes = [];
-	cube_array = [];
-    numbertag_list = [];
-    parameters.i = -1;
-    bb1 = [];
-    numbertag_list = [];
-    folder_position = [];
-    folder_size = [];
   	this.showData();
     }
 
