@@ -52,6 +52,7 @@ var parameters = {
     before : function() {
 	workspace.previousFile();
     },
+    hold_bbox_flag : false,
     bird_view : function() {
 	bird_view();
     },
@@ -481,6 +482,7 @@ function init() {
     gui.add(parameters, 'flame').name("Nowflame").listen();
     gui.add(parameters, 'next').name("NextData");
     gui.add(parameters, 'before').name("BeforeData");
+    var HoldCheck = gui.add(parameters, 'hold_bbox_flag').name("Hold").listen();
     gui.add(parameters, 'update_database').name("UploadDatabase");
     gui.add(parameters, 'bird_view').name("BirdView");
     gui.add(parameters, 'camera_view').name("CameraView");
@@ -491,6 +493,7 @@ function init() {
     data_load(parameters);
     gui.open();
     gui_add_tag();
+    HoldCheck.onChange(function(value){workspace.hold_flag = value;})
     ImageCheck.onChange(function(value) {
 	if (!bird_view_flag) {
 	    image_array[0].visible = value;

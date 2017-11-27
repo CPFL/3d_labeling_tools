@@ -1,9 +1,9 @@
 // TODO:
-//   implement alpha of packAnnotation()
 //   implement JPEG feature of packAnnotation()
 //	 implement JPEG feature
 //   implement server sending feature of archiveWorkFiles()
 //   implement branch feature bbox reader
+//   check isModified()
 
 //   ...// Instantiate with WorkSpace("pcd")
 class WorkSpace {
@@ -18,6 +18,7 @@ class WorkSpace {
 	this.bboxes = []; // Bounding boxes
 	this.results = []; // Replacement of azure blob for output
 	this.originalBboxes = []; // For checking modified or not
+	this.hold_flag = false; //Hold bbox flag
     }
 
     // Use prototype? --->
@@ -154,13 +155,13 @@ class WorkSpace {
 	} else {
 	    var annotations = [];
 	    for (var i = 0; i < this.bboxes.length; ++i) {
-	    var result_mat = MaxProd(invMat(CameraExMat),[cube_array[i].position.x,cube_array[i].position.y,cube_array[i].position.z,1]);
+	    var result_mat = MaxProd(invMax(CameraExMat),[cube_array[i].position.x,cube_array[i].position.y,cube_array[i].position.z,1]);
 	    //TODO BoundingBox Number Tag workspace.bboxes[i].numbertag
 		var bbox = this.bboxes[i];
 		annotations.push({label: workspace.bboxes[i].label,
 				  truncated: 0,
 				  occluded: 3,
-				  alpha: 0,//TODO 
+				  alpha: 0,//Calculate by Python script
 				  left: 0,//TODO please input image feature
 				  top: 0,//TODO
 				  right: 0,//TODO
