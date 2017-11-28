@@ -24,6 +24,7 @@ var now_flame = 0
 var ground_mesh
 var image_array = []
 var bird_view_flag = false;
+
 var parameters = {
     i : -1,
     flame : now_flame,
@@ -60,10 +61,122 @@ var parameters = {
 	camera_view();
     },
     update_database : function() {
-    workspace.archiveWorkFiles();
+	workspace.archiveWorkFiles();
     }
     //,result: function() {result(1,cube_array);}
-};
+}
+
+// Visualize 2d and 3d data
+WorkSpace.prototype.showData = function() {
+    parameters.flame = this.curFile;
+    var img_url = this.workBlob + '/JPEGImages/'
+		+ this.fileList[this.curFile] + '.jpg';
+    THREE.ImageUtils.crossOrigin = '';
+    var image = THREE.ImageUtils.loadTexture(img_url);
+    var material = new THREE.MeshBasicMaterial({map: image});
+    var geometry = new THREE.PlaneGeometry(4, 3);
+    var image_plane = new THREE.Mesh(geometry, material);
+    var pcd_loader = new THREE.PCDLoader();
+    var pcd_url = this.workBlob + '/PCDPoints/'
+		+ this.fileList[this.curFile] + '/all.pcd';
+    pcd_loader.load(pcd_url, function (mesh) {
+	scene.add(mesh);
+	ground_mesh = mesh;
+	/* var center = mesh.geometry.boundingSphere.center;*/
+    });
+    var image_mat = MaxProd(CameraExMat, [0, 0, 2, 1]);
+    image_plane.position.x = image_mat[0];
+    image_plane.position.y = image_mat[1];
+    image_plane.position.z = image_mat[2];
+    image_plane.rotation.y = -Math.PI/2;
+    image_plane.rotation.x = Math.PI/2;
+    scene.add(image_plane);
+    image_array = [];
+    image_array.push(image_plane);
+    image_2d = new Image();
+    image_2d.crossOrigin = 'Anonymous'
+    image_2d.src = this.workBlob + '/JPEGImages/'
+		 + this.fileList[this.curFile] + '.jpg?' + new Date().getTime();
+    image_2d.onload = function() {
+	ctx.drawImage(image_2d, 0, 0);
+    }
+    if(parameters.image_checkbox==false){
+	image_array[0].visible = false;
+    }
+    if(this.hold_flag==false){
+	for (var k = 0 ; k < parameters.i + 1 ; k++){
+	    gui.removeFolder('BoundingBox'+String(k));
+	    cube_array[k].visible=false;
+	}
+	this.originalBboxes = [];
+	this.bboxes = [];
+	cube_array = [];
+	numbertag_list = [];
+	bb1 = [];
+	numbertag_list = [];
+	folder_position = [];
+	folder_size = [];
+	parameters.i = -1;
+	this.getAnnotations();
+    }
+}
+
+// Set values to this.bboxes from annotations
+WorkSpace.prototype.loadAnnotations = function(annotations) {
+    this.bboxes = [];
+    for (var i in annotations) {
+	if (i != "remove") {
+	    var readfile_mat =
+		MaxProd(CameraExMat,[parseFloat(annotations[i].x),
+				     parseFloat(annotations[i].y),
+				     parseFloat(annotations[i].z),
+				     1]);
+	    var readfile_parameters = {
+		x : readfile_mat[0],
+		y : -readfile_mat[1],
+		z : readfile_mat[2],
+		delta_x : 0,
+		delta_y : 0,
+		delta_z : 0,
+		width : parseFloat(annotations[i].width),
+		height : parseFloat(annotations[i].height),
+		depth : parseFloat(annotations[i].length),
+		yaw : parseFloat(annotations[i].rotation_y),
+		numbertag : parameters.i + 1,
+		label : annotations[i].label
+	    };
+	    addbbox(readfile_parameters);
+	}
+    }
+    this.originalBboxes = this.bboxes.concat();
+    /* main();*/
+}
+
+// Create annotations from this.bboxes
+WorkSpace.prototype.packAnnotations = function() {
+    var annotations = [];
+    for (var i = 0; i < this.bboxes.length; ++i) {
+	var result_mat = MaxProd(invMax(CameraExMat),[cube_array[i].position.x,cube_array[i].position.y,cube_array[i].position.z,1]);
+	//TODO BoundingBox Number Tag workspace.bboxes[i].numbertag
+	var bbox = this.bboxes[i];
+	annotations.push({label: workspace.bboxes[i].label,
+			  truncated: 0,
+			  occluded: 3,
+			  alpha: 0,//Calculate by Python script
+			  left: 0,//TODO please input image feature
+			  top: 0,//TODO
+			  right: 0,//TODO
+			  bottom: 0,//TODO
+			  height: cube_array[i].scale.y,
+			  width: cube_array[i].scale.x,
+			  length: cube_array[i].scale.z,
+			  x: result_mat[0],
+			  y: result_mat[1],
+			  z: result_mat[2],
+			  rotation_y: cube_array[i].rotation.z});
+    }
+    return annotations;
+}
 
 var workspace = new WorkSpace("PCD");
 workspace.setWorkFiles();
@@ -115,10 +228,10 @@ function readYAMLFile(filename) {
 function invMax(inMax){
     var a = new Array(4);
     for(i = 0 ; i < 4 ; i++ ){
-    a[i] = new Array(4);
-    for(j = 0; j < 4; j++){
-        a[i][j] = inMax[i][j];
-    }
+	a[i] = new Array(4);
+	for(j = 0; j < 4; j++){
+            a[i][j] = inMax[i][j];
+	}
     }
     var c = a.length;
     var buf;
