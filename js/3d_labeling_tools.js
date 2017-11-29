@@ -131,6 +131,13 @@ WorkSpace.prototype.loadAnnotations = function(annotations) {
 				     parseFloat(annotations[i].y),
 				     parseFloat(annotations[i].z),
 				     1]);
+        var width_tmp = parseFloat(annotations[i].width);
+        var height_tmp = parseFloat(annotations[i].height);
+        var depth_tmp = parseFloat(annotations[i].length);
+        if(width_tmp == 0.0){width_tmp = 0.0001}
+        if(height_tmp == 0.0){height_tmp = 0.0001}
+        if(depth_tmp == 0.0){depth_tmp = 0.0001}
+
 	    var readfile_parameters = {
 		x : readfile_mat[0],
 		y : -readfile_mat[1],
@@ -138,9 +145,9 @@ WorkSpace.prototype.loadAnnotations = function(annotations) {
 		delta_x : 0,
 		delta_y : 0,
 		delta_z : 0,
-		width : parseFloat(annotations[i].width),
-		height : parseFloat(annotations[i].height),
-		depth : parseFloat(annotations[i].length),
+		width : width_tmp,
+		height : height_tmp,
+		depth : depth_tmp,
 		yaw : parseFloat(annotations[i].rotation_y),
 		numbertag : parameters.i + 1,
 		label : annotations[i].label
@@ -432,7 +439,6 @@ function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize( window.innerWidth, window.innerHeight );
-    controls.handleResize();
 }
 
 //drow animation
