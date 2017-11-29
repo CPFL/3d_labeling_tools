@@ -12,7 +12,6 @@ var folder_position = [];
 var folder_size = [];
 var bbox_flag = true;
 var click_flag = false;
-var projector = new THREE.Projector();
 var click_object_index = 0;
 var mouse_down = { x: 0, y: 0 };
 var mouse_up = { x: 0, y: 0 };
@@ -71,8 +70,10 @@ WorkSpace.prototype.showData = function() {
     parameters.flame = this.curFile;
     var img_url = this.workBlob + '/JPEGImages/'
 		+ this.fileList[this.curFile] + '.jpg';
-    THREE.ImageUtils.crossOrigin = '';
-    var image = THREE.ImageUtils.loadTexture(img_url);
+    var textloader = new THREE.TextureLoader()
+    textloader.crossOrigin = '';
+    var image = textloader.load(img_url);
+    image.minFilter = THREE.LinearFilter;
     var material = new THREE.MeshBasicMaterial({map: image});
     var geometry = new THREE.PlaneGeometry(4, 3);
     var image_plane = new THREE.Mesh(geometry, material);
@@ -487,11 +488,11 @@ function init() {
     controls.rotateSpeed = 2.0;
     controls.zoomSpeed = 0.3;
     controls.panSpeed = 0.2;
-    controls.noZoom = false;
-    controls.noPan = false;
-    controls.noRotate = false;
-    controls.staticMoving = true;
-    controls.dynamicDampingFactor = 0.3;
+    controls.enableZoom = true;
+    controls.enablePan = true;
+    controls.enableRotate = true;
+    controls.enableDamping = false;
+    controls.dampingFactor = 0.3;
     controls.minDistance = 0.3;
     controls.maxDistance = 0.3 * 100;
     controls.noKey = true;
@@ -514,7 +515,7 @@ function init() {
 		mouse_down.x =  (mouse_down.x / window.innerWidth) * 2 - 1;
 		mouse_down.y = -(mouse_down.y / window.innerHeight) * 2 + 1;
 		var vector = new THREE.Vector3( mouse_down.x, mouse_down.y ,1);
-		projector.unprojectVector( vector, camera );
+		vector.unproject( camera );
 		var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
 		var click_object = ray.intersectObjects( cube_array );
 		if ( click_object.length > 0 ){
@@ -563,7 +564,7 @@ function init() {
 	    mouse_up.x =  (mouse_up.x / window.innerWidth) * 2 - 1;
 	    mouse_up.y = -(mouse_up.y / window.innerHeight) * 2 + 1;
 	    var vector = new THREE.Vector3(  mouse_up.x, mouse_up.y ,1);
-	    projector.unprojectVector( vector, camera );
+	    vector.unproject( camera );
 	    var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
 	    var click_object = ray.intersectObjects(click_plane_array);
 	    if ( click_object.length > 0 && bb1[click_object_index].closed==false){
@@ -585,7 +586,6 @@ function init() {
 		cube_array[click_object_index].scale.z = workspace.bboxes[click_object_index].depth;
 	    }
 	    if(click_flag==true){
-		click_plane_array[0].visible = false;
 		click_plane_array = [];
 		for(var i = 0 ; i < bb1.length; i++){
 		    bb1[i].close();
@@ -631,7 +631,7 @@ function init() {
     image_2d.crossOrigin = 'Anonymous';
     image_2d.src = workspace.workBlob + '/JPEGImages/' + ( '000000'  + parameters.flame ).slice( -6 )  + '.jpg?' + new Date().getTime();
     image_2d.onload = function() {
-	ctx.drawImage(image_2d, 0, 0);
+	ctx.drawImage(image_2d, 0, 0, 800, 600);
     }
     canvas2D.style.display = "none";
 }
