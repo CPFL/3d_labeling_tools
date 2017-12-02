@@ -119,6 +119,7 @@ WorkSpace.prototype.showData = function() {
 	folder_size = [];
 	parameters.i = -1;
 	this.getAnnotations();
+    gui_add_tag();
     }
 }
 
@@ -611,7 +612,6 @@ function init() {
     readYAMLFile(workspace.workBlob + "/calibration.yml");
     data_load(parameters);
     gui.open();
-    gui_add_tag();
     HoldCheck.onChange(function(value){workspace.hold_flag = value;})
     ImageCheck.onChange(function(value) {
 	if (!bird_view_flag) {
