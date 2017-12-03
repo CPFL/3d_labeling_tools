@@ -41,7 +41,7 @@ var parameters = {
 	    depth : 0.5,
 	    yaw : 0,
 	    numbertag : parameters.i+1,
-	    label : ""
+	    label : attribute[0]
 	};
 	addbbox(init_parameters);
 	gui_reset_tag();
@@ -80,10 +80,14 @@ WorkSpace.prototype.showData = function() {
     var pcd_loader = new THREE.PCDLoader();
     var pcd_url = this.workBlob + '/PCDPoints/'
 		+ this.fileList[this.curFile] + '/all.pcd';
+    var oldFile = this.curFile;
+    var that = this;
     pcd_loader.load(pcd_url, function (mesh) {
-	scene.add(mesh);
-	ground_mesh = mesh;
-	/* var center = mesh.geometry.boundingSphere.center;*/
+	if (oldFile == that.curFile) {
+	    scene.add(mesh);
+	    ground_mesh = mesh;
+	    /* var center = mesh.geometry.boundingSphere.center;*/
+	}
     });
     var image_mat = MaxProd(CameraExMat, [0, 0, 2, 1]);
     image_plane.position.x = image_mat[0];
@@ -114,13 +118,12 @@ WorkSpace.prototype.showData = function() {
 	cube_array = [];
 	numbertag_list = [];
 	bb1 = [];
-    gui_tag = [];
+	gui_tag = [];
 	numbertag_list = [];
 	folder_position = [];
 	folder_size = [];
 	parameters.i = -1;
 	this.getAnnotations();
-    gui_add_tag();
     }
 }
 
@@ -134,12 +137,12 @@ WorkSpace.prototype.loadAnnotations = function(annotations) {
 				     parseFloat(annotations[i].y),
 				     parseFloat(annotations[i].z),
 				     1]);
-        var width_tmp = parseFloat(annotations[i].width);
-        var height_tmp = parseFloat(annotations[i].height);
-        var depth_tmp = parseFloat(annotations[i].length);
-        if(width_tmp == 0.0){width_tmp = 0.0001}
-        if(height_tmp == 0.0){height_tmp = 0.0001}
-        if(depth_tmp == 0.0){depth_tmp = 0.0001}
+            var width_tmp = parseFloat(annotations[i].width);
+            var height_tmp = parseFloat(annotations[i].height);
+            var depth_tmp = parseFloat(annotations[i].length);
+            if(width_tmp == 0.0){width_tmp = 0.0001}
+            if(height_tmp == 0.0){height_tmp = 0.0001}
+            if(depth_tmp == 0.0){depth_tmp = 0.0001}
 
 	    var readfile_parameters = {
 		x : readfile_mat[0],
@@ -160,6 +163,7 @@ WorkSpace.prototype.loadAnnotations = function(annotations) {
     }
     this.originalBboxes = this.bboxes.concat();
     /* main();*/
+    gui_add_tag();
 }
 
 // Create annotations from this.bboxes
@@ -189,7 +193,6 @@ WorkSpace.prototype.packAnnotations = function() {
 }
 
 var workspace = new WorkSpace("PCD");
-workspace.setWorkFiles();
 
 //add remove function in dat.GUI
 dat.GUI.prototype.removeFolder = function(name){
