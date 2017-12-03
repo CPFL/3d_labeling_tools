@@ -114,6 +114,7 @@ WorkSpace.prototype.showData = function() {
 	cube_array = [];
 	numbertag_list = [];
 	bb1 = [];
+    gui_tag = [];
 	numbertag_list = [];
 	folder_position = [];
 	folder_size = [];
