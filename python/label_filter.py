@@ -6,7 +6,8 @@
 # Output each pcd
 # Output no comma Annotation text
 
-text_pass = ""
-pcd_pass = 
-output_text_pass = 
-output_pcd_pass = 
+label_pass = "../input"
+
+def read_annotation(label_pass):
+   label_list_pass = 
+   annotation_pass = label_pass + "/Annotation"
