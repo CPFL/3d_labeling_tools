@@ -1,1 +1,6 @@
 .DS_Store
+cpp/CMakeFiles/*
+cpp/CMakeCache.txt
+cpp/Makefile
+cpp/cmake_install.cmake
+cpp/label_filter
