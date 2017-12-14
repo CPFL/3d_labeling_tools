@@ -39,10 +39,10 @@ vector<string> split(const string &s, char delim) {
     return elems;
 }
 
-bool bbox_TorF(pcl::PointXYZ p, double x, double y, double z , double width, double height, double depth, double yaw){
-   double yaw_x = (p.x-x)*cos(M_PI/2.0-yaw)-(p.y-y)*sin(M_PI/2.0-yaw);
-   double yaw_y = (p.y-y)*sin(M_PI/2.0-yaw)+(p.x-x)*cos(M_PI/2.0-yaw);
-   if(abs(p.z - z)*2.0 <= depth && abs(yaw_x)*2.0 <= width && abs(yaw_y)*2.0 <= height){
+bool bbox_TorF(pcl::PointXYZ p, double x, double y, double z , double height, double width, double depth, double yaw){
+   double yaw_x = (p.x-x)*cos(yaw/2.0)-(p.y-y)*sin(yaw/2.0);
+   double yaw_y = (p.y-y)*sin(yaw/2.0)+(p.x-x)*cos(yaw/2.0);
+   if((abs(p.z - z)*2.0 - 0.05 <= depth) && (abs(yaw_x)*2.0 - 0.05<= height) && (abs(yaw_y)*2.0 - 0.05<= width)){
        return true;
    }
    return false;
@@ -155,6 +155,7 @@ int main(int argc, char *argv[]) {
            remove(globbuf.gl_pathv[i]);
         }
         globfree(&globbuf);
+
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
         string pcd_files = string(argv[1]) + string("/PCDPoints/") + string(str) + string("/all.pcd");
         if (pcl::io::loadPCDFile<pcl::PointXYZ> (pcd_files.c_str(), *cloud) == -1){
@@ -178,8 +179,8 @@ int main(int argc, char *argv[]) {
                       position_cam[0],
                       position_cam[1],
                       position_cam[2],
-                      strtod(annotations_data[j][9].c_str(),NULL),
                       strtod(annotations_data[j][8].c_str(),NULL),
+                      strtod(annotations_data[j][9].c_str(),NULL),
                       strtod(annotations_data[j][10].c_str(),NULL),
                       strtod(annotations_data[j][14].c_str(),NULL))){
 

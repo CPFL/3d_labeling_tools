@@ -82,7 +82,7 @@ class WorkSpace {
 			var str_list = allText.split("\n");
 			for (var i = 0 ; i < str_list.length ; i++) {
 			    var str = str_list[i].split(" ");
-			    if(str.length == 15){
+			    if(str.length == 16){
 				res.push({label: str[0],
 					  truncated: str[1],
 					  occluded: str[2],
