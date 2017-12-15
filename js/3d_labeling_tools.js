@@ -17,7 +17,7 @@ var mouse_down = { x: 0, y: 0 };
 var mouse_up = { x: 0, y: 0 };
 var click_point = THREE.Vector3();
 var click_plane_array = []
-var attribute = ["Car", "Pedestrian", "Motorbike", "Bus", "Truck", "Cyclist", "Train", "Obstacle", "Stop_signal", "Wait_signal", "Gosignal"];
+var attribute = ["car", "pedestrian", "motorbike", "bus", "truck", "cyclist", "train", "obstacle", "stop_signal", "wait_signal", "gosignal"];
 var input_filename = 'input'
 var now_flame = 0
 var ground_mesh
