@@ -1,8 +1,10 @@
 # C++ feature
 
-make
+bash build_fileter.bash
 
-./label_filter ../input
+cd build
+
+./label_filter ../../input
 
 This module calcurate alpha parameter in labeling result and remake pcd file by each bbox.
 
