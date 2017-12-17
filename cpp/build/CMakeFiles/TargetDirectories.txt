@@ -1,3 +1,0 @@
-/home/automanuser/3d_labeling_tools/cpp/build/CMakeFiles/edit_cache.dir
-/home/automanuser/3d_labeling_tools/cpp/build/CMakeFiles/rebuild_cache.dir
-/home/automanuser/3d_labeling_tools/cpp/build/CMakeFiles/label_filter.dir
