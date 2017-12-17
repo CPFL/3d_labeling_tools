@@ -39,7 +39,7 @@ vector<string> split(const string &s, char delim) {
     return elems;
 }
 
-bool bbox_TorF(pcl::PointXYZ p, double x, double y, double z , double height, double width, double depth, double yaw){
+bool bbox_TorF(pcl::PointXYZI p, double x, double y, double z , double height, double width, double depth, double yaw){
    double yaw_x = (p.x-x)*cos(yaw/2.0)-(p.y-y)*sin(yaw/2.0);
    double yaw_y = (p.y-y)*sin(yaw/2.0)+(p.x-x)*cos(yaw/2.0);
    if((abs(p.z - z)*2.0 - 0.05 <= depth) && (abs(yaw_x)*2.0 - 0.05<= height) && (abs(yaw_y)*2.0 - 0.05<= width)){
@@ -48,14 +48,15 @@ bool bbox_TorF(pcl::PointXYZ p, double x, double y, double z , double height, do
    return false;
 }
 
-string calcurate_alpha(pcl::PointCloud<pcl::PointXYZ> cluster,cv::Mat cameraExtrinsicMat){
+string calcurate_alpha(pcl::PointCloud<pcl::PointXYZI> cluster,cv::Mat cameraExtrinsicMat){
         pcl::PointXYZ centroid;
         for (size_t i = 0; i < cluster.points.size (); ++i)
         {
-            pcl::PointXYZ p;
+            pcl::PointXYZI p;
             p.x = cluster.points[i].x;
             p.y = cluster.points[i].y;
             p.z = cluster.points[i].z;
+            p.intensity = cluster.points[i].intensity;
 
             centroid.x += p.x;
             centroid.y += p.y;
@@ -156,15 +157,15 @@ int main(int argc, char *argv[]) {
         }
         globfree(&globbuf);
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
         string pcd_files = string(argv[1]) + string("/PCDPoints/") + string(str) + string("/all.pcd");
-        if (pcl::io::loadPCDFile<pcl::PointXYZ> (pcd_files.c_str(), *cloud) == -1){
+        if (pcl::io::loadPCDFile<pcl::PointXYZI> (pcd_files.c_str(), *cloud) == -1){
            PCL_ERROR ("Couldn't read pcd file \n");
            return (-1);
         }
-        vector<pcl::PointCloud<pcl::PointXYZ> > clusters;
+        vector<pcl::PointCloud<pcl::PointXYZI> > clusters;
         for (size_t i = 0; i < annotations_data.size (); ++i){
-            pcl::PointCloud<pcl::PointXYZ> cluster;
+            pcl::PointCloud<pcl::PointXYZI> cluster;
             clusters.push_back(cluster);
         }
         for (size_t i = 0; i < cloud->points.size (); ++i){
