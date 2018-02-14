@@ -89,7 +89,8 @@ WorkSpace.prototype.showData = function() {
 	    /* var center = mesh.geometry.boundingSphere.center;*/
 	}
     });
-    var image_mat = MaxProd(CameraExMat, [0, 0, 2, 1]);
+    //var image_mat = MaxProd(CameraExMat, [0, 0, 2, 1]);
+    var image_mat = [3.0, 0, -1, 1];
     image_plane.position.x = image_mat[0];
     image_plane.position.y = image_mat[1];
     image_plane.position.z = image_mat[2];
