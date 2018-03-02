@@ -356,7 +356,7 @@ var labelTool = {
 	this.labelId = labelId;
 	this.selectedDataType = this.dataTypes[0];
 	dat.GUI.toggleHide();
-	if (!this.hasData("Image")) {
+	if (!(this.dataTypes.indexOf("Image") >= 0)) {
 	    this.toggleDataType();
 	}
     },
@@ -507,7 +507,8 @@ var labelTool = {
     
     toggleDataType: function() {
 	if (this.selectedDataType == "Image") {
-	    if ("PCD" in this.dataTypes) {
+	    if (this.dataTypes.indexOf("PCD") >= 0) {
+		console.log("HOGE");
 		dat.GUI.toggleHide();
 		this.selectedDataType = "PCD";
 		$('#canvas3d').show();
@@ -521,7 +522,7 @@ var labelTool = {
 		this.showData();
 	    }
 	} else {
-	    if (this.hasImage) {
+	    if (this.dataTypes.indexOf("Image") >= 0) {
 		dat.GUI.toggleHide();
 		this.selectedDataType = "Image";
 		$('#canvas3d').hide();
