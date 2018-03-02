@@ -1,4 +1,4 @@
-var canvas2D,stats,image_2d,ctx;
+/* var canvas2D,stats,image_2d,ctx;*/
 var camera, controls, scene, renderer;
 var cube;
 var keyboard = new KeyboardState();
@@ -47,10 +47,10 @@ var parameters = {
 	gui_reset_tag();
     },
     next : function() {
-	workspace.nextFile();
+	labelTool.nextFile();
     },
     before : function() {
-	workspace.previousFile();
+	labelTool.previousFile();
     },
     hold_bbox_flag : false,
     bird_view : function() {
@@ -60,13 +60,19 @@ var parameters = {
 	camera_view();
     },
     update_database : function() {
-	workspace.archiveWorkFiles();
+	labelTool.archiveWorkFiles();
     }
     //,result: function() {result(1,cube_array);}
 }
 
+labelTool.onInitialize("PCD", function() {
+    if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+    init();
+    animate();
+});
+
 // Visualize 2d and 3d data
-WorkSpace.prototype.showData = function() {
+labelTool.onLoadData("PCD", function() {
     parameters.flame = this.curFile;
     var img_url = this.workBlob + '/JPEGImages/'
 		+ this.fileList[this.curFile] + '.jpg';
@@ -99,13 +105,13 @@ WorkSpace.prototype.showData = function() {
     scene.add(image_plane);
     image_array = [];
     image_array.push(image_plane);
-    image_2d = new Image();
-    image_2d.crossOrigin = 'Anonymous'
-    image_2d.src = this.workBlob + '/JPEGImages/'
-		 + this.fileList[this.curFile] + '.jpg?' + new Date().getTime();
-    image_2d.onload = function() {
-	ctx.drawImage(image_2d, 0, 0);
-    }
+    /* image_2d = new Image();
+     * image_2d.crossOrigin = 'Anonymous'
+     * image_2d.src = this.workBlob + '/JPEGImages/'
+       + this.fileList[this.curFile] + '.jpg?' + new Date().getTime();
+     * image_2d.onload = function() {
+       ctx.drawImage(image_2d, 0, 0);
+     * }*/
     if(parameters.image_checkbox==false){
 	image_array[0].visible = false;
     }
@@ -124,76 +130,26 @@ WorkSpace.prototype.showData = function() {
 	folder_position = [];
 	folder_size = [];
 	parameters.i = -1;
-	this.getAnnotations();
     }
-}
+});
 
-// Set values to this.bboxes from annotations
-WorkSpace.prototype.loadAnnotations = function(annotations) {
-    this.bboxes = [];
-    for (var i in annotations) {
-	if (i != "remove") {
-	    var readfile_mat =
-		MaxProd(CameraExMat,[parseFloat(annotations[i].x),
-				     parseFloat(annotations[i].y),
-				     parseFloat(annotations[i].z),
-				     1]);
-            var width_tmp = parseFloat(annotations[i].width);
-            var height_tmp = parseFloat(annotations[i].height);
-            var depth_tmp = parseFloat(annotations[i].length);
-            if(width_tmp == 0.0){width_tmp = 0.0001}
-            if(height_tmp == 0.0){height_tmp = 0.0001}
-            if(depth_tmp == 0.0){depth_tmp = 0.0001}
-
-	    var readfile_parameters = {
-		x : readfile_mat[0],
-		y : -readfile_mat[1],
-		z : readfile_mat[2],
-		delta_x : 0,
-		delta_y : 0,
-		delta_z : 0,
-		width : width_tmp,
-		height : height_tmp,
-		depth : depth_tmp,
-		yaw : parseFloat(annotations[i].rotation_y),
-		numbertag : parameters.i + 1,
-		label : annotations[i].label
-	    };
-	    addbbox(readfile_parameters);
+bboxes.onSelect(function(newIndex, oldIndex) {
+    click_plane_array = [];
+    for (var i = 0; i < bboxFolders.length; i++){
+	if (bboxFolders[i] != undefined) {
+	    bboxFolders[i].close();
 	}
     }
-    this.originalBboxes = this.bboxes.concat();
-    /* main();*/
-    gui_add_tag();
-}
-
-// Create annotations from this.bboxes
-WorkSpace.prototype.packAnnotations = function() {
-    var annotations = [];
-    for (var i = 0; i < this.bboxes.length; ++i) {
-	var result_mat = MaxProd(invMax(CameraExMat),[cube_array[i].position.x,cube_array[i].position.y,cube_array[i].position.z,1]);
-	//TODO BoundingBox Number Tag workspace.bboxes[i].numbertag
-	var bbox = this.bboxes[i];
-	annotations.push({label: workspace.bboxes[i].label,
-			  truncated: 0,
-			  occluded: 3,
-			  alpha: 0,//Calculate by Python script
-			  left: 0,//TODO please input image feature
-			  top: 0,//TODO
-			  right: 0,//TODO
-			  bottom: 0,//TODO
-			  height: cube_array[i].scale.y,
-			  width: cube_array[i].scale.x,
-			  length: cube_array[i].scale.z,
-			  x: result_mat[0],
-			  y: result_mat[1],
-			  z: result_mat[2],
-			  rotation_y: cube_array[i].rotation.z});
+    if (bboxFolders[newIndex] != undefined) {
+	bboxFolders[newIndex].open();
     }
-    return annotations;
-}
-
-var workspace = new WorkSpace("PCD");
+    if (folder_position[newIndex] != undefined) {
+	folder_position[newIndex].open();
+    }
+    if (folder_size[newIndex] != undefined) {
+	folder_size[newIndex].open();
+    }
+});
 
 //add remove function in dat.GUI
 dat.GUI.prototype.removeFolder = function(name){
@@ -291,7 +247,7 @@ function MaxProd (inMax1,inMax2){
 
 //load pcd data and image data
 function data_load() {
-    workspace.showData;
+    labelTool.showData;
 }
 
 //change camera position to bird view position
@@ -303,7 +259,8 @@ function bird_view() {
     bird_view_flag = true;
     parameters.image_checkbox = true;
     image_array[0].visible = false;
-    canvas2D.style.display = "block";
+    $("#jpeg-label-canvas").show();
+    changeCanvasSize($("#canvas3d").width() / 4, $("#canvas3d").width() * 5 / 32);
 }
 
 //change camera position to initial position
@@ -314,13 +271,13 @@ function camera_view(){
     controls.target.set( 1, 0, 0);
     parameters.image_checkbox = true;
     image_array[0].visible = true;
-    canvas2D.style.display = "none";
+    $("#jpeg-label-canvas").hide();
     bird_view_flag = false;
 }
 
 //add new bounding box
-function addbbox(read_parameters){
-    workspace.bboxes.push(read_parameters);
+function addbbox(index, read_parameters){
+    labelTool.setPCDBBox(read_parameters);
     var tmp_parameters =
 	{
 	    x: read_parameters.x,
@@ -336,10 +293,9 @@ function addbbox(read_parameters){
 	    numbertag:read_parameters.numbertag,
 	    label:read_parameters.label
 	};
-    workspace.originalBboxes.push(tmp_parameters);
     parameters.i = 1 + parameters.i;
     var num = parameters.i;
-    var bbox = workspace.bboxes[num];
+    var bbox = labelTool.getPCDBBox(num);
     var cubeGeometry = new THREE.CubeGeometry(1.0,1.0,1.0);
     var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0x008866, wireframe:true } );
     cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
@@ -354,7 +310,7 @@ function addbbox(read_parameters){
 //register now bounding box
 function addbbox_gui(num){
     var bb = gui.addFolder('BoundingBox'+String(num));
-    var bbox = workspace.bboxes[num];
+    var bbox = labelTool.getPCDBBox(num);
     bb1.push(bb);
     var folder1 = bb1[num].addFolder('Position');
     var cubeX = folder1.add( bbox, 'x' ).min(-50).max(50).step(0.01).listen();
@@ -401,7 +357,7 @@ function addbbox_gui(num){
 //add gui number tag to integrate 2d labeling result
 function gui_add_tag(){
     for (var i = 0 ; i < numbertag_list.length ; i++){
-	tag = bb1[i].add( workspace.bboxes[i], 'numbertag' ,numbertag_list).name("BoundingBoxTag");
+	tag = bb1[i].add( labelTool.getPCDBBox(i), 'numbertag' ,numbertag_list).name("BoundingBoxTag");
 	gui_tag.push(tag)
     }
 }
@@ -414,7 +370,7 @@ function gui_reset_tag(){
 
     gui_tag = [];
     for (var i = 0 ; i < numbertag_list.length ; i++){
-	tag = bb1[i].add( workspace.bboxes[i], 'numbertag' ,numbertag_list).name("BoundingBoxTag");
+	tag = bb1[i].add( labelTool.getPCDBBox(i), 'numbertag' ,numbertag_list).name("BoundingBoxTag");
 	gui_tag.push(tag)
     }
 }
@@ -422,23 +378,23 @@ function gui_reset_tag(){
 //reset cube patameter and position
 function resetCube(num)
 {
-    workspace.bboxes[num].x = workspace.originalBboxes[num].x;
-    workspace.bboxes[num].y = workspace.originalBboxes[num].y;
-    workspace.bboxes[num].z = workspace.originalBboxes[num].z;
-    workspace.bboxes[num].yaw = workspace.originalBboxes[num].yaw;
-    workspace.bboxes[num].delta_x = workspace.originalBboxes[num].delta_x;
-    workspace.bboxes[num].delta_y = workspace.originalBboxes[num].delta_y;
-    workspace.bboxes[num].delta_z = workspace.originalBboxes[num].delta_z;
-    workspace.bboxes[num].width = workspace.originalBboxes[num].width;
-    workspace.bboxes[num].height = workspace.originalBboxes[num].height;
-    workspace.bboxes[num].depth = workspace.originalBboxes[num].depth;
-    cube_array[num].position.x = workspace.bboxes[num].x;
-    cube_array[num].position.y = -workspace.bboxes[num].y;
-    cube_array[num].position.z = workspace.bboxes[num].z;
-    cube_array[num].rotation.z = workspace.bboxes[num].yaw;
-    cube_array[num].scale.x = workspace.bboxes[num].width;
-    cube_array[num].scale.y = workspace.bboxes[num].height;
-    cube_array[num].scale.z = workspace.bboxes[num].depth;
+    labelTool.bboxes[num].x = labelTool.originalBboxes[num].x;
+    labelTool.bboxes[num].y = labelTool.originalBboxes[num].y;
+    labelTool.bboxes[num].z = labelTool.originalBboxes[num].z;
+    labelTool.bboxes[num].yaw = labelTool.originalBboxes[num].yaw;
+    labelTool.bboxes[num].delta_x = labelTool.originalBboxes[num].delta_x;
+    labelTool.bboxes[num].delta_y = labelTool.originalBboxes[num].delta_y;
+    labelTool.bboxes[num].delta_z = labelTool.originalBboxes[num].delta_z;
+    labelTool.bboxes[num].width = labelTool.originalBboxes[num].width;
+    labelTool.bboxes[num].height = labelTool.originalBboxes[num].height;
+    labelTool.bboxes[num].depth = labelTool.originalBboxes[num].depth;
+    cube_array[num].position.x = labelTool.bboxes[num].x;
+    cube_array[num].position.y = -labelTool.bboxes[num].y;
+    cube_array[num].position.z = labelTool.bboxes[num].z;
+    cube_array[num].rotation.z = labelTool.bboxes[num].yaw;
+    cube_array[num].scale.x = labelTool.bboxes[num].width;
+    cube_array[num].scale.y = labelTool.bboxes[num].height;
+    cube_array[num].scale.z = labelTool.bboxes[num].depth;
 }
 
 //change window size
@@ -577,19 +533,19 @@ function init() {
 		var drag_vector = {x:click_object[0].point.x - click_point.x, y:click_object[0].point.y - click_point.y, z:click_object[0].point.z - click_point.z};
 		var yaw_drag_vector = {x:drag_vector.x * Math.cos(-cube_array[click_object_index].rotation.z) - drag_vector.y * Math.sin(-cube_array[click_object_index].rotation.z), y:drag_vector.x * Math.sin(-cube_array[click_object_index].rotation.z) + drag_vector.y * Math.cos(-cube_array[click_object_index].rotation.z), z:drag_vector.z};
 		var judge_click_point = {x:(click_point.x - cube_array[click_object_index].position.x) * Math.cos(-cube_array[click_object_index].rotation.z) - (click_point.y - cube_array[click_object_index].position.y) * Math.sin(-cube_array[click_object_index].rotation.z), y:(click_point.x - cube_array[click_object_index].position.x) * Math.sin(-cube_array[click_object_index].rotation.z) + (click_point.y - cube_array[click_object_index].position.y) * Math.cos(-cube_array[click_object_index].rotation.z)};
-		workspace.bboxes[click_object_index].width = judge_click_point.x*yaw_drag_vector.x/Math.abs(judge_click_point.x) + workspace.bboxes[click_object_index].width;
-		workspace.bboxes[click_object_index].x = drag_vector.x/2 + workspace.bboxes[click_object_index].x;
-		workspace.bboxes[click_object_index].height = judge_click_point.y*yaw_drag_vector.y/Math.abs(judge_click_point.y) + workspace.bboxes[click_object_index].height;
-		workspace.bboxes[click_object_index].y = -drag_vector.y/2 + workspace.bboxes[click_object_index].y;
-		workspace.bboxes[click_object_index].depth = (click_point.z - cube_array[click_object_index].position.z)*drag_vector.z/Math.abs((click_point.z - cube_array[click_object_index].position.z)) + workspace.bboxes[click_object_index].depth;
-		workspace.bboxes[click_object_index].z = drag_vector.z/2 + workspace.bboxes[click_object_index].z;
-		cube_array[click_object_index].position.x = workspace.bboxes[click_object_index].x;
-		cube_array[click_object_index].position.y = -workspace.bboxes[click_object_index].y;
-		cube_array[click_object_index].position.z = workspace.bboxes[click_object_index].z;
-		cube_array[click_object_index].rotation.z = workspace.bboxes[click_object_index].yaw;
-		cube_array[click_object_index].scale.x = workspace.bboxes[click_object_index].width;
-		cube_array[click_object_index].scale.y = workspace.bboxes[click_object_index].height;
-		cube_array[click_object_index].scale.z = workspace.bboxes[click_object_index].depth;
+		labelTool.bboxes[click_object_index].width = judge_click_point.x*yaw_drag_vector.x/Math.abs(judge_click_point.x) + labelTool.bboxes[click_object_index].width;
+		labelTool.bboxes[click_object_index].x = drag_vector.x/2 + labelTool.bboxes[click_object_index].x;
+		labelTool.bboxes[click_object_index].height = judge_click_point.y*yaw_drag_vector.y/Math.abs(judge_click_point.y) + labelTool.bboxes[click_object_index].height;
+		labelTool.bboxes[click_object_index].y = -drag_vector.y/2 + labelTool.bboxes[click_object_index].y;
+		labelTool.bboxes[click_object_index].depth = (click_point.z - cube_array[click_object_index].position.z)*drag_vector.z/Math.abs((click_point.z - cube_array[click_object_index].position.z)) + labelTool.bboxes[click_object_index].depth;
+		labelTool.bboxes[click_object_index].z = drag_vector.z/2 + labelTool.bboxes[click_object_index].z;
+		cube_array[click_object_index].position.x = labelTool.bboxes[click_object_index].x;
+		cube_array[click_object_index].position.y = -labelTool.bboxes[click_object_index].y;
+		cube_array[click_object_index].position.z = labelTool.bboxes[click_object_index].z;
+		cube_array[click_object_index].rotation.z = labelTool.bboxes[click_object_index].yaw;
+		cube_array[click_object_index].scale.x = labelTool.bboxes[click_object_index].width;
+		cube_array[click_object_index].scale.y = labelTool.bboxes[click_object_index].height;
+		cube_array[click_object_index].scale.z = labelTool.bboxes[click_object_index].depth;
 	    }
 	    if(click_flag==true){
 		click_plane_array = [];
@@ -614,29 +570,29 @@ function init() {
     var ImageCheck = gui.add(parameters, 'image_checkbox').name("Image").listen();
     //gui.add(parameters,'result').name("result");
 
-    readYAMLFile(workspace.workBlob + "/calibration.yml");
+    readYAMLFile(labelTool.workBlob + "/calibration.yml");
     data_load(parameters);
     gui.open();
-    HoldCheck.onChange(function(value){workspace.hold_flag = value;})
+    HoldCheck.onChange(function(value){labelTool.hold_flag = value;})
     ImageCheck.onChange(function(value) {
 	if (!bird_view_flag) {
 	    image_array[0].visible = value;
 	} else if (bird_view_flag && value) {
-	    canvas2D.style.display = "block";
+	    $("#jpeg-label-canvas").show();
 	} else if (bird_view_flag && !value) {
-	    canvas2D.style.display = "none"
+	    $("#jpeg-label-canvas").hide();
 	}
     });
-    //result(0, cube_array, workspace.bboxes)
+    //result(0, cube_array, labelTool.bboxes)
 
-    canvas2D = document.getElementById('canvas2d');
-    ctx = canvas2D.getContext('2d');
-    ctx.scale(0.3,0.3);
-    image_2d = new Image();
-    image_2d.crossOrigin = 'Anonymous';
-    image_2d.src = workspace.workBlob + '/JPEGImages/' + ( '000000'  + parameters.flame ).slice( -6 )  + '.jpg?' + new Date().getTime();
-    image_2d.onload = function() {
-	ctx.drawImage(image_2d, 0, 0, 800, 600);
-    }
-    canvas2D.style.display = "none";
+    /* canvas2D = document.getElementById('canvas2d');
+     * ctx = canvas2D.getContext('2d');*/
+    /* ctx.scale(0.3,0.3);
+     * image_2d = new Image();
+     * image_2d.crossOrigin = 'Anonymous';
+     * image_2d.src = labelTool.workBlob + '/JPEGImages/' + ( '000000'  + parameters.flame ).slice( -6 )  + '.jpg?' + new Date().getTime();
+     * image_2d.onload = function() {
+       ctx.drawImage(image_2d, 0, 0, 800, 600);
+     * }
+     * canvas2D.style.display = "none";*/
 }
