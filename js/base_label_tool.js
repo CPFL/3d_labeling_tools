@@ -9,13 +9,16 @@ var labelTool = {
     hasLoadedImage: false,
     hasLoadedPCD: false,
     originalSize: [0, 0], // Original size of jpeg image
-    originalBboxes: [],   // For checking modified or not
+    originalAnnotations: [],   // For checking modified or not
     hold_flag: false,     // Hold bbox flag
     loadCount: 0,         // To prevent sending annotations before loading them
     selectedDataType: "",
     skipFrameCount: 1,
     targetClass: "Car",
     pageBox: document.getElementById('page_num'),
+    unsavedAnnotations: [], // For retrying save.
+    unsavedFrame: -1,
+    bkupExists: false,
 
     /********** Externally defined functions **********
      * Define these functions in the labeling tools.
@@ -62,17 +65,14 @@ var labelTool = {
 	    this.hasLoadedPCD = true;
 	}
     },
-        
+    
     // Set values to this.bboxes from annotations
     loadAnnotations: function(annotations) {
 	// Remove old bounding boxes.
 	bboxes.clear();
 	// Add new bounding boxes.
 	var index = 0;
-	console.log("LOOPs: " + annotations.length - 1);
 	for (var i in annotations) {
-	    console.log("LOOP" + i);
-	    console.log(bboxes.contents);
 	    var label = annotations[i].label;
 	    switch (label) {
 		case "car":         label = "Car";        break;
@@ -88,61 +88,80 @@ var labelTool = {
 		case "go_signal":   label = "GoSignal";   break;
 	    }
 	    annotations[i].label = label;
+	    ["left", "right", "top", "bottom"].forEach(function(key) {
+		annotations[i][key] = parseInt(annotations[i][key]);
+	    });
 	    var hasLabel = {"Image": false,
 			    "PCD": false};
 	    var annotation = annotations[i];
 	    bboxes.selectEmpty();
-	    if (!(annotation.left == 0 && annotation.top == 0 &&
-		  annotation.right == 0 && annotation.bottom == 0)) {
-		var minPos = convertPositionToCanvas(annotation.left, annotation.top);
-		var maxPos = convertPositionToCanvas(annotation.right, annotation.bottom);
-		var params = {x: minPos[0],
-			      y: minPos[1],
-			      width: maxPos[0] - minPos[0],
-			      height: maxPos[1] - minPos[1]
-		};
-		bboxes.setTarget("Image", params, label);
-		hasLabel["Image"] = true;
+	    if (this.hasData("Image")) {
+		if (!(annotation.left == 0 && annotation.top == 0 &&
+		      annotation.right == 0 && annotation.bottom == 0)) {
+		    var minPos = convertPositionToCanvas(annotation.left, annotation.top);
+		    var maxPos = convertPositionToCanvas(annotation.right, annotation.bottom);
+		    var params = {x: minPos[0],
+				  y: minPos[1],
+				  width: maxPos[0] - minPos[0],
+				  height: maxPos[1] - minPos[1]
+		    };
+		    bboxes.setTarget("Image", params, label);
+		    hasLabel["Image"] = true;
+		}
 	    }
-	    var readMat = MaxProd(CameraExMat,[parseFloat(annotation.x),
-					       parseFloat(annotation.y),
-					       parseFloat(annotation.z),
-					       1]);
-	    var tmpWidth = parseFloat(annotation.width);
-	    var tmpHeight = parseFloat(annotation.height);
-	    var tmpDepth = parseFloat(annotation.length);
-	    if (!(tmpWidth == 0.0 && tmpHeight == 0.0 && tmpDepth == 0.0)) {
-		hasPCDLabel = true;
-		tmpWidth = Math.max(tmpWidth, 0.0001);
-		tmpHeight = Math.max(tmpHeight, 0.0001);
-		tmpDepth = Math.max(tmpDepth, 0.0001);
-		var readfile_parameters = {
-		    x: readMat[0],
-		    y: -readMat[1],
-		    z: readMat[2],
-		    delta_x: 0,
-		    delta_y: 0,
-		    delta_z: 0,
-		    width: tmpWidth,
-		    height: tmpHeight,
-		    depth: tmpDepth,
-		    yaw: parseFloat(annotation.rotation_y),
-		    numbertag: parameters.i + 1,
-		    label: annotation.label
-		};
-		var params = {
-		    // TODO!!!!!!!!!!!!
-		};
-		addbbox(readfile_parameters, index); // TODO? -> bboxes.onAdd
-		bboxes.setTarget("PCD", params, label);
-		hasLabel["PCD"] = true;
-	    }
+	    if (this.hasData("PCD")) {
+		var readMat = MaxProd(CameraExMat,[parseFloat(annotation.x),
+						   parseFloat(annotation.y),
+						   parseFloat(annotation.z),
+						   1]);
+		var tmpWidth = parseFloat(annotation.width);
+		var tmpHeight = parseFloat(annotation.height);
+		var tmpDepth = parseFloat(annotation.length);
+		if (!(tmpWidth == 0.0 && tmpHeight == 0.0 && tmpDepth == 0.0)) {
+		    hasPCDLabel = true;
+		    tmpWidth = Math.max(tmpWidth, 0.0001);
+		    tmpHeight = Math.max(tmpHeight, 0.0001);
+		    tmpDepth = Math.max(tmpDepth, 0.0001);
+		    var readfile_parameters = {
+			x: readMat[0],
+			y: -readMat[1],
+			z: readMat[2],
+			delta_x: 0,
+			delta_y: 0,
+			delta_z: 0,
+			width: tmpWidth,
+			height: tmpHeight,
+			depth: tmpDepth,
+			yaw: parseFloat(annotation.rotation_y),
+			numbertag: parameters.i + 1,
+			label: annotation.label
+		    };
+		    var params = {
+			// TODO!!!!!!!!!!!!
+		    };
+		    addbbox(readfile_parameters, index); // TODO? -> bboxes.onAdd
+		    bboxes.setTarget("PCD", params, label);
+		    hasLabel["PCD"] = true;
+		}
+	    } /* else {
+		 annotations[i].truncated = 0;
+		 annotations[i].occluded = 3;
+		 annotations[i].alpha = 0;
+		 annotations[i].height = 0;
+		 annotations[i].width = 0;
+		 annotations[i].length = 0;
+		 annotations[i].x = 0;
+		 annotations[i].y = 0;
+		 annotations[i].z = 0;
+		 annotations[i].rotation_y = 0;
+		 }*/
 	    if (!hasLabel["Image"] && !hasLabel["PCD"]) {
 		bboxes.pop();
 	    }
 	}
 	// Backup initial positions.
-	/* this.originalBboxes = this.bboxes.concat();*/
+	this.originalAnnotations = this.createAnnotations();
+	/* this.originalAnnotations = annotations;*/ // This is better but messed by 1px diffs.
     },
 
     // Create annotations from this.bboxes
@@ -263,16 +282,18 @@ var labelTool = {
 		    this.loadAnnotations(res);
 		}
 		this.loadCount--;
+	    }.bind(this),
+	    error: function(res) {
+		this.loadCount--;
 	    }.bind(this)
-	})
+	});
     },
 
-    setAnnotations() {
+    setAnnotations(annotations) {
 	if (this.loadCount != 0) {
 	    return;
 	}
 	this.pending = true;
-	var annotations = this.createAnnotations();
 	var fileName = this.fileNames[this.curFile];
 	var fileNumber = this.curFile;
 	request({
@@ -283,12 +304,47 @@ var labelTool = {
 		   annotations: JSON.stringify(annotations),
 		   label_id: this.labelId},
 	    success: function(res) {
+		$("#label-tool-log").val("Saved frame " + (fileNumber + 1));
+		$("#label-tool-log").css("color", "#fff");
 		this.pending = false;
 	    }.bind(this),
 	    error: function(res) {
+		$("#label-tool-log").val("Failed to save frame " + (fileNumber + 1));
+		$("#label-tool-log").css("color", "#f00");
+		this.unsavedAnnotations = annotations;
+		this.unsavedFrame = fileNumber;
+		this.bkupExists = true;
 		this.pending = false;
 	    }.bind(this)
 	})
+    },
+
+    retrySave() {
+	if (!this.bkupExists) {
+	    return;
+	}
+	$("#label-tool-log").val("Retrying to save frame " + (this.unsavedFrame + 1) + "...");
+	$("#label-tool-log").css("color", "#fff");
+	var fileName = this.fileNames[this.unsavedFrame];
+	request({
+	    url: '/label/annotations/',
+	    type: 'POST',
+	    dataType: 'html',
+	    data: {file_name: fileName + ".txt",
+		   annotations: JSON.stringify(this.unsavedAnnotations),
+		   label_id: this.labelId + 1},
+	    success: function(res) {
+		$("#label-tool-log").val("Saved frame " + (this.unsavedFrame + 1));
+		$("#label-tool-log").css("color", "#fff");
+		this.bkupExists = false;
+		this.pending = false;
+	    }.bind(this),
+	    error: function(res) {
+		$("#label-tool-log").val("Failed to save frame " + (this.unsavedFrame + 1));
+		$("#label-tool-log").css("color", "#f00");
+		this.pending = false;
+	    }.bind(this)
+	});
     },
 
     getInformations() {
@@ -363,9 +419,9 @@ var labelTool = {
     
     /****************** Public functions **************/
 
-    isModified: function() {
-	return this.bboxes.toString() != this.originalBboxes.toString();
-    },
+    /* isModified: function() {
+       return this..toString() != this.originalBboxes.toString();
+     * },*/
 
     getFileName: function(index) {
 	return this.fileNames[index];
@@ -440,7 +496,7 @@ var labelTool = {
      *     },*/
 
     hasData: function(dataType) {
-	return dataType in this.dataTypes;
+	return this.dataTypes.indexOf(dataType) >= 0;
     },
     
     previousFrame: function() {
@@ -466,9 +522,13 @@ var labelTool = {
     },
 
     changeFrame: function(fileNumber) {
-	/* if (this.isModified() || this.hasPCD) {*/ //TODO: Track whether bbox is modified or not
-	this.setAnnotations();
-	/* }*/
+	if (this.bkupExists) {
+	    return;
+	}
+	var annotations = this.createAnnotations();
+	if (JSON.stringify(annotations) != JSON.stringify(this.originalAnnotations)) {
+	    this.setAnnotations(annotations);
+	}
 	this.curFile = fileNumber;
 	this.pageBox.placeholder = (this.curFile + 1) + "/" + this.fileNames.length;
 	this.pageBox.value = "";
@@ -481,6 +541,8 @@ var labelTool = {
 	this.showData();
 	if (!this.hold_flag) {
 	    this.getAnnotations();
+	} else {
+	    this.originalAnnotations = "Unknown";
 	}
     },
 
@@ -508,7 +570,6 @@ var labelTool = {
     toggleDataType: function() {
 	if (this.selectedDataType == "Image") {
 	    if (this.dataTypes.indexOf("PCD") >= 0) {
-		console.log("HOGE");
 		dat.GUI.toggleHide();
 		this.selectedDataType = "PCD";
 		$('#canvas3d').show();

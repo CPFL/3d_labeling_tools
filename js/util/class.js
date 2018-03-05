@@ -43,7 +43,7 @@ var classes = {
 	return this[this.__target];
     },
     select: function(cls) {
-	this.onChange();
+	this.onChange(cls);
 	if (bboxes.getTarget() != undefined) {
 	    bboxes.changeClass(bboxes.__target, cls);
 	}

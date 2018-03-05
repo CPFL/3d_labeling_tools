@@ -47,8 +47,12 @@
 	<div id="wrapper">
 	    <div id="label-header">
 		<ul class="label-header-left-items">
-		    <li class="label-header-item">
+		    <li class="label-header-item left">
 			<a class="label-header-brand label-header-column" href="{% url 'upload_form:index' %}">Automan</a>
+		    </li>
+		    <li class="label-header-item left">
+			<input class="black-input" type="text" id="label-tool-log"
+			       placeholder="" value="" onClick="labelTool.retrySave()"/>
 		    </li>
 		</ul>
 		<ul class="label-header-right-items">
@@ -235,7 +239,7 @@
 	    <script src='js/util/ajax_wrapper.js?ver=1.0'></script>
 	    <div>
 		<script type="text/javascript">
-		 labelTool.setParameters(1 , "Image&PCD");
+		 labelTool.setParameters(1 , "Image");
 		 labelTool.getInformations();
 		</script>
 	    </div>

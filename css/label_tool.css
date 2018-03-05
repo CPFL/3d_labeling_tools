@@ -224,6 +224,20 @@
     margin-top: 10px;
     float: right;
 }
+.label-header-item.left {
+    float: left; !important
+}
+#label-tool-log {
+    margin-top: 10px;
+    margin-left: 10px;
+    width: 100%;
+    color: #f00;
+}
+@media (min-width: 1188px) {
+    #label-tool-log {
+	width: 300px;
+    }
+}
 .label-header-right-items {
     height: 50px;
     float: right;
