@@ -19,6 +19,7 @@ var labelTool = {
     unsavedAnnotations: [], // For retrying save.
     unsavedFrame: -1,
     bkupExists: false,
+    CameraExMat: [],
 
     /********** Externally defined functions **********
      * Define these functions in the labeling tools.
@@ -110,7 +111,7 @@ var labelTool = {
 		}
 	    }
 	    if (this.hasData("PCD")) {
-		var readMat = MaxProd(CameraExMat,[parseFloat(annotation.x),
+		var readMat = MaxProd(this.CameraExMat,[parseFloat(annotation.x),
 						   parseFloat(annotation.y),
 						   parseFloat(annotation.z),
 						   1]);
@@ -122,7 +123,21 @@ var labelTool = {
 		    tmpWidth = Math.max(tmpWidth, 0.0001);
 		    tmpHeight = Math.max(tmpHeight, 0.0001);
 		    tmpDepth = Math.max(tmpDepth, 0.0001);
-		    var readfile_parameters = {
+		    /*var readfile_parameters = {
+			x: readMat[0],
+			y: -readMat[1],
+			z: readMat[2],
+			delta_x: 0,
+			delta_y: 0,
+			delta_z: 0,
+			width: tmpWidth,
+			height: tmpHeight,
+			depth: tmpDepth,
+			yaw: parseFloat(annotation.rotation_y),
+			numbertag: parameters.i + 1,
+			label: annotation.label
+		    };*/
+		    var params = {
 			x: readMat[0],
 			y: -readMat[1],
 			z: readMat[2],
@@ -136,10 +151,8 @@ var labelTool = {
 			numbertag: parameters.i + 1,
 			label: annotation.label
 		    };
-		    var params = {
-			// TODO!!!!!!!!!!!!
-		    };
-		    addbbox(readfile_parameters, index); // TODO? -> bboxes.onAdd
+		    //addbbox(readfile_parameters, index); // TODO? -> bboxes.onAdd
+		    bboxes.onAdd(i, params);
 		    bboxes.setTarget("PCD", params, label);
 		    hasLabel["PCD"] = true;
 		}

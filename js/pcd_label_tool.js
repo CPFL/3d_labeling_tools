@@ -5,7 +5,6 @@ var keyboard = new KeyboardState();
 var numbertag_list = [];
 var gui_tag = [];
 var gui = new dat.GUI();
-var CameraExMat = [];
 var cube_array = [];
 var bb1 = [];
 var folder_position = [];
@@ -73,9 +72,9 @@ labelTool.onInitialize("PCD", function() {
 
 // Visualize 2d and 3d data
 labelTool.onLoadData("PCD", function() {
-    parameters.flame = this.curFile;
-    var img_url = this.workBlob + '/JPEGImages/'
-		+ this.fileList[this.curFile] + '.jpg';
+    parameters.flame = labelTool.curFile;
+    var img_url = labelTool.workBlob + '/JPEGImages/'
+		+ labelTool.fileNames[labelTool.curFile] + '.jpg';
     var textloader = new THREE.TextureLoader()
     textloader.crossOrigin = '';
     var image = textloader.load(img_url);
@@ -84,16 +83,17 @@ labelTool.onLoadData("PCD", function() {
     var geometry = new THREE.PlaneGeometry(4, 3);
     var image_plane = new THREE.Mesh(geometry, material);
     var pcd_loader = new THREE.PCDLoader();
-    var pcd_url = this.workBlob + '/PCDPoints/'
-		+ this.fileList[this.curFile] + '/all.pcd';
-    var oldFile = this.curFile;
-    var that = this;
+    var pcd_url = labelTool.workBlob + '/PCDPoints/'
+		+ labelTool.fileNames[labelTool.curFile] + '/all.pcd';
+    //var oldFile = labelTool.curFile;
+    //var that = this;
     pcd_loader.load(pcd_url, function (mesh) {
-	if (oldFile == that.curFile) {
+	//if (oldFile == that.curFile) {
 	    scene.add(mesh);
 	    ground_mesh = mesh;
+        labelTool.hasPCD = true;
 	    /* var center = mesh.geometry.boundingSphere.center;*/
-	}
+	//}
     });
     //var image_mat = MaxProd(CameraExMat, [0, 0, 2, 1]);
     var image_mat = [3.0, 0, -1, 1];
@@ -131,6 +131,7 @@ labelTool.onLoadData("PCD", function() {
 	folder_size = [];
 	parameters.i = -1;
     }
+
 });
 
 bboxes.onSelect(function(newIndex, oldIndex) {
@@ -180,7 +181,7 @@ function readYAMLFile(filename) {
 		var allText = rawFile.responseText;
 		for (var i = 0 ; i < allText.split("\n").length ; i++){
 		    if(allText.split("\n")[i].split(":")[0].trim() == 'data'){
-			CameraExMat = [[parseFloat(allText.split("\n")[i].split(":")[1].split("[")[1].split(",")[0]),parseFloat(allText.split("\n")[i].split(":")[1].split("[")[1].split(",")[1]),parseFloat(allText.split("\n")[i+1].trim().split(",")[0]),parseFloat(allText.split("\n")[i+1].trim().split(",")[1])],
+			labelTool.CameraExMat = [[parseFloat(allText.split("\n")[i].split(":")[1].split("[")[1].split(",")[0]),parseFloat(allText.split("\n")[i].split(":")[1].split("[")[1].split(",")[1]),parseFloat(allText.split("\n")[i+1].trim().split(",")[0]),parseFloat(allText.split("\n")[i+1].trim().split(",")[1])],
 				       [parseFloat(allText.split("\n")[i+2].trim().split(",")[0]),parseFloat(allText.split("\n")[i+2].trim().split(",")[1]),parseFloat(allText.split("\n")[i+3].trim().split(",")[0]),parseFloat(allText.split("\n")[i+3].trim().split(",")[1])],
 				       [parseFloat(allText.split("\n")[i+4].trim().split(",")[0]),parseFloat(allText.split("\n")[i+4].trim().split(",")[1]),parseFloat(allText.split("\n")[i+5].trim().split(",")[0]),parseFloat(allText.split("\n")[i+5].trim().split(",")[1])],
 				       [0,0,0,1]];
@@ -276,7 +277,7 @@ function camera_view(){
 }
 
 //add new bounding box
-function addbbox(index, read_parameters){
+bboxes.onAdd(function addbbox(index, read_parameters){
     labelTool.setPCDBBox(read_parameters);
     var tmp_parameters =
 	{
@@ -305,7 +306,7 @@ function addbbox(index, read_parameters){
     scene.add(cube);
     cube_array.push(cube);
     addbbox_gui(num);
-}
+});
 
 //register now bounding box
 function addbbox_gui(num){
@@ -583,7 +584,7 @@ function init() {
 	    $("#jpeg-label-canvas").hide();
 	}
     });
-    //result(0, cube_array, labelTool.bboxes)
+        //result(0, cube_array, labelTool.bboxes)
 
     /* canvas2D = document.getElementById('canvas2d');
      * ctx = canvas2D.getContext('2d');*/
