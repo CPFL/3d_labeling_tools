@@ -115,6 +115,9 @@ labelTool.onLoadData("PCD", function() {
     if(parameters.image_checkbox==false){
 	image_array[0].visible = false;
     }
+    if(bird_view_flag==true){
+    image_array[0].visible = false;
+    }
     if(this.hold_flag==false){
 	for (var k = 0 ; k < parameters.i + 1 ; k++){
 	    gui.removeFolder('BoundingBox'+String(k));
@@ -561,11 +564,11 @@ function init() {
     }
 
     gui.add(parameters, 'addbboxpara').name("AddBoundingBox");
-    gui.add(parameters, 'flame').name("Nowflame").listen();
-    gui.add(parameters, 'next').name("NextData");
-    gui.add(parameters, 'before').name("BeforeData");
-    var HoldCheck = gui.add(parameters, 'hold_bbox_flag').name("Hold").listen();
-    gui.add(parameters, 'update_database').name("UploadDatabase");
+    //gui.add(parameters, 'flame').name("Nowflame").listen();
+    //gui.add(parameters, 'next').name("NextData");
+    //gui.add(parameters, 'before').name("BeforeData");
+    //var HoldCheck = gui.add(parameters, 'hold_bbox_flag').name("Hold").listen();
+    //gui.add(parameters, 'update_database').name("UploadDatabase");
     gui.add(parameters, 'bird_view').name("BirdView");
     gui.add(parameters, 'camera_view').name("CameraView");
     var ImageCheck = gui.add(parameters, 'image_checkbox').name("Image").listen();
@@ -574,7 +577,7 @@ function init() {
     readYAMLFile(labelTool.workBlob + "/calibration.yml");
     data_load(parameters);
     gui.open();
-    HoldCheck.onChange(function(value){labelTool.hold_flag = value;})
+    //HoldCheck.onChange(function(value){labelTool.hold_flag = value;})
     ImageCheck.onChange(function(value) {
 	if (!bird_view_flag) {
 	    image_array[0].visible = value;
