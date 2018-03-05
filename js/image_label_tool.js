@@ -146,6 +146,9 @@ $(window).keydown(function(e) {
 	case "84": // T
 	    toggleIsolation();
 	    break;
+	case "68": // D
+	    bboxes.removeTarget("Image");
+	    break;
     }
     if (isRectModifyFunction) {
 	adjastTextBox(bboxes.getTargetIndex());
@@ -435,7 +438,7 @@ function Amalgamate() {
 }
 
 function getClickedIndex(e) {
-    var targetIndex = -1;
+    var targetIndex = bboxes.length();
     for (var i = 0; i < bboxes.length(); ++i) {
 	if (bboxes.get(i, "Image") == undefined) {
 	    continue;
@@ -636,12 +639,9 @@ function removeEmphasis(index) {
 }
 
 function addTextBox(index) {
-    console.log("addtext" + index);
-    console.log(bboxes.contents[index]);
     if (!bboxes.exists(index, "Image")) {
 	return;
     }
-    console.log("addtextgo");
     var bbox = bboxes.get(index, "Image");
     var posX = bbox["rect"].attr("x");
     var posY = bbox["rect"].attr("y");

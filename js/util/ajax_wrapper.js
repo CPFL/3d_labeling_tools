@@ -44,10 +44,15 @@ function request(options) {
     } else if (options.type == "POST") {
 	switch (options.url) {
 	    case "/label/annotations/":
-		__labelData[options.data["file_name"]] = options.data["annotations"]
+		/* if (options.data["label_id"] == 2) {*/
+		__labelData[options.data["file_name"]] = options.data["annotations"];
+		options.success("None");
+		/* } else {
+		   options.error();
+		   }*/
 		break;
 	}
-    }	
+    }
 };
 
 function parseAnnotationFile(fileName) {

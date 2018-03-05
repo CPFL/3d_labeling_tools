@@ -1,4 +1,3 @@
-
 var bboxes = {
     localOnSelect: {
 	"Image": function(newIndex, oldIndex) {},
@@ -20,7 +19,6 @@ var bboxes = {
     },
     onAdd: function(dataType, f) {
 	this.localOnAdd[dataType] = f;
-	console.log(f);
     },
     localOnRemove: {
 	"Image": function(index) {},
@@ -49,18 +47,17 @@ var bboxes = {
 		return false;
 	    }
 	}
-	var cls;
 	if (cls == undefined) {
 	    cls = this.get(index, "class");
 	}
 	var obj = this.localOnAdd[dataType](index, cls, params);
 	this.contents[index][dataType] = obj;
+	this.contents[index]["class"] = cls;
+	this.__table.changeClass(index, cls);
 	this.__table.add(index, dataType);
 	if (isExpanded) {
 	    this.selectEmpty();
 	}
-	console.log("SET " + index + dataType);
-	console.log(obj);
     },
     changeClass: function(index, cls) {
 	if (this.contents[index] == undefined) {
@@ -81,14 +78,12 @@ var bboxes = {
 	}
 	this.__tail++;
 	this.__table.expand(classes.targetName(), false, false);
-	console.log("EXPANDED");
     },
     getTarget: function(dataType) {
 	if (dataType == undefined) {
 	    return this.contents[this.__target];
 	}
 	if (!this.isValidTarget()) {
-	    console.log(this.__target);
 	    return undefined;
 	}
 	return this.contents[this.__target][dataType];
@@ -185,14 +180,18 @@ var bboxes = {
 	    delete this.contents[index][dataType];
 	    this.__table.remove(index, dataType);
 	}
-	console.log("REMOVED" + index + dataType);
+    },
+    removeTarget: function(dataType) {
+	if (!this.exists(this.__target, dataType)) {
+	    return;
+	}
+	this.remove(this.__target, dataType);
     },
     pop: function() {
 	if (this.__tail == -1) {
 	    return false;
 	}
 	this.remove(this.__tail);
-	console.log("POPPED");
 	return true;
     },
     clear: function() {
@@ -208,7 +207,6 @@ var bboxes = {
 	this.__tail = -1;
 	this.contents = [];
 	this.__table.clear();
-	console.log("CLEARED");
     },
     __target: 0,
     __tail: -1,

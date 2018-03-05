@@ -17,7 +17,6 @@ class BBoxTable {
     expand(label, hasImageLabel, hasPCDLabel) {
 	var index = this.__tail + 1;
 	this.__tail++;
-	console.log(index);
 	if (!$("#" + this.tableId + "-number-" + index)[0]) {
 	    var $li = $('<li class="jpeg-label-sidebar-item" ' + this.liOptions(index) + '>'
 		      + '<div class="label-tool-sidebar-number-box">'
@@ -39,7 +38,6 @@ class BBoxTable {
     }
 
     refresh() {
-	console.log("REFRESHED");
 	var bboxBkup = this.__bboxes.slice(0, this.__bboxes.length);
 	this.clear();
 	for (var i in bboxBkup) {
@@ -52,7 +50,7 @@ class BBoxTable {
     }
 
     add(index, dataType) {
-	var color = classes.target()["color"];
+	var color = classes[this.__bboxes[index]["label"]]["color"];
 	if (this.__bboxes[index] != undefined) {
 	    color = classes[this.__bboxes[index]["label"]].color;
 	}
@@ -68,6 +66,7 @@ class BBoxTable {
 	if (this.__bboxes[index]["PCD"] != undefined) {
 	    $("#" + this.tableId + "-" + "PCD" + "-" + index).css("color", color);
 	}
+	this.__bboxes[index]["label"] = cls;
     }
     
     remove(index, dataType) {
