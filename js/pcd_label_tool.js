@@ -173,24 +173,40 @@ dat.GUI.prototype.removeFolder = function(name){
 //read local calibration file.
 function readYAMLFile(filename) {
     var rawFile = new XMLHttpRequest();
+    var CameraEx_flag = false;
+    var Camera_param = [];
     rawFile.open("GET", filename, false);
     rawFile.onreadystatechange = function (){
 	if(rawFile.readyState === 4){
 	    if(rawFile.status === 200 || rawFile.status == 0){
 		var allText = rawFile.responseText;
 		for (var i = 0 ; i < allText.split("\n").length ; i++){
-		    if(allText.split("\n")[i].split(":")[0].trim() == 'data'){
-			labelTool.CameraExMat = [[parseFloat(allText.split("\n")[i].split(":")[1].split("[")[1].split(",")[0]),parseFloat(allText.split("\n")[i].split(":")[1].split("[")[1].split(",")[1]),parseFloat(allText.split("\n")[i+1].trim().split(",")[0]),parseFloat(allText.split("\n")[i+1].trim().split(",")[1])],
-				       [parseFloat(allText.split("\n")[i+2].trim().split(",")[0]),parseFloat(allText.split("\n")[i+2].trim().split(",")[1]),parseFloat(allText.split("\n")[i+3].trim().split(",")[0]),parseFloat(allText.split("\n")[i+3].trim().split(",")[1])],
-				       [parseFloat(allText.split("\n")[i+4].trim().split(",")[0]),parseFloat(allText.split("\n")[i+4].trim().split(",")[1]),parseFloat(allText.split("\n")[i+5].trim().split(",")[0]),parseFloat(allText.split("\n")[i+5].trim().split(",")[1])],
+            if(allText.split("\n")[i].split(":")[0].trim() == 'CameraExtrinsicMat'){
+                CameraEx_flag = true;
+            }
+		    if(CameraEx_flag && allText.split("\n")[i].split(":")[0].trim() == 'data'){
+                for(m = 0; m < allText.split("\n")[i].split(":")[1].split("[")[1].split(",").length-1; m++){
+                    var each_param = parseFloat(allText.split("\n")[i].split(":")[1].split("[")[1].split(",")[m])
+                    Camera_param.push(each_param)
+                }
+                while(Camera_param.length < 12){
+                    i = i+1
+                    for(m = 0; m < allText.split("\n")[i].trim().split(",").length-1; m++){
+                        var each_param = parseFloat(allText.split("\n")[i].trim().split(",")[m])
+                        Camera_param.push(each_param)
+                    }
+                }
+			labelTool.CameraExMat = [[parseFloat(Camera_param[0]),parseFloat(Camera_param[1]),parseFloat(Camera_param[2]),parseFloat(Camera_param[3])],
+				       [parseFloat(Camera_param[4]),parseFloat(Camera_param[5]),parseFloat(Camera_param[6]),parseFloat(Camera_param[7])],
+				       [parseFloat(Camera_param[8]),parseFloat(Camera_param[9]),parseFloat(Camera_param[10]),parseFloat(Camera_param[11])],
 				       [0,0,0,1]];
+            CameraEx_flag = false;
 			break
 		    }
 		}
 	    }
 	}
     }
-
     rawFile.send(null);
 }
 
