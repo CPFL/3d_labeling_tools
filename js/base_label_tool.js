@@ -20,6 +20,8 @@ var labelTool = {
     unsavedFrame: -1,
     bkupExists: false,
     CameraExMat: [],
+    cube_array: [],
+    bbox_index : [],
 
     /********** Externally defined functions **********
      * Define these functions in the labeling tools.
@@ -148,12 +150,19 @@ var labelTool = {
 			height: tmpHeight,
 			depth: tmpDepth,
 			yaw: parseFloat(annotation.rotation_y),
-			numbertag: parameters.i + 1,
-			label: annotation.label
+			org: original = {
+				x: readMat[0],
+			    y: -readMat[1],
+			    z: readMat[2],
+			    width: tmpWidth,
+			    height: tmpHeight,
+			    depth: tmpDepth,
+			    yaw: parseFloat(annotation.rotation_y)}
 		    };
 		    //addbbox(readfile_parameters, index); // TODO? -> bboxes.onAdd
-		    bboxes.onAdd(i, params);
-		    bboxes.setTarget("PCD", params, label);
+		    //bboxes.selectEmpty();
+		    bboxes.set(i,"PCD", params);
+		    //bboxes.setTarget("PCD", params, label);
 		    hasLabel["PCD"] = true;
 		}
 	    } /* else {
@@ -210,18 +219,19 @@ var labelTool = {
 		annotation["bottom"] = maxPos[1];
 	    }
 	    if (bboxes.exists(i, "PCD")) {
-		var cubeMat = [cube_array[i].position.x,
-			       cube_array[i].position.y,
-			       cube_array[i].position.z,
+	    var anno_index = this.bbox_index.lastIndexOf(i.toString());
+		var cubeMat = [this.cube_array[anno_index].position.x,
+			       this.cube_array[anno_index].position.y,
+			       this.cube_array[anno_index].position.z,
 			       1];
-		var resultMat = MaxProd(invMax(CameraExMat), cubeMat);
-		annotation["height"] = cube_array[i].scale.y;
-		annotation["width"] = cube_array[i].scale.x;
-		annotation["length"] = cube_array[i].scale.z;
+		var resultMat = MaxProd(invMax(this.CameraExMat), cubeMat);
+		annotation["height"] = this.cube_array[anno_index].scale.y;
+		annotation["width"] = this.cube_array[anno_index].scale.x;
+		annotation["length"] = this.cube_array[anno_index].scale.z;
 		annotation["x"] = resultMat[0];
 		annotation["y"] = resultMat[1];
 		annotation["z"] = resultMat[2];
-		annotation["rotation_y"] = cube_array[i].rotation.z;
+		annotation["rotation_y"] = this.cube_array[anno_index].rotation.z;
 	    }
 	    annotations.push(annotation);
 	}
@@ -545,9 +555,25 @@ var labelTool = {
 	this.curFile = fileNumber;
 	this.pageBox.placeholder = (this.curFile + 1) + "/" + this.fileNames.length;
 	this.pageBox.value = "";
+	if (this.dataTypes.indexOf("PCD") >= 0){
+	for (var k = 0 ; k < this.cube_array.length ; k++){
+		gui.removeFolder('BoundingBox'+String(this.bbox_index[k]));
+		this.cube_array[k].visible=false;
+	}}
 	if (this.hasPCD && this.hasLoadedPCD) {
 	    ground_mesh.visible = false;
 	    image_array[0].visible = false;
+	    if(this.hold_flag==false){
+		this.bboxes = [];
+		this.cube_array = [];
+		numbertag_list = [];
+		bb1 = [];
+		gui_tag = [];
+		numbertag_list = [];
+		folder_position = [];
+		folder_size = [];
+		this.bbox_index = [];
+	    }
 	}
 	this.hasLoadedImage = false;
 	this.hasLoadedPCD = false;

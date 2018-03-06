@@ -5,7 +5,6 @@ var keyboard = new KeyboardState();
 var numbertag_list = [];
 var gui_tag = [];
 var gui = new dat.GUI();
-var cube_array = [];
 var bb1 = [];
 var folder_position = [];
 var folder_size = [];
@@ -22,6 +21,7 @@ var now_flame = 0
 var ground_mesh
 var image_array = []
 var bird_view_flag = false;
+var cls = 0;
 
 var parameters = {
     i : -1,
@@ -39,11 +39,24 @@ var parameters = {
 	    height : 0.5,
 	    depth : 0.5,
 	    yaw : 0,
-	    numbertag : parameters.i+1,
-	    label : attribute[0]
+        org:original = {
+            x : 1,
+            y : 0,
+            z : -1,
+            delta_x : 0,
+            delta_y : 0,
+            delta_z : 0,
+            width : 0.5,
+            height : 0.5,
+            depth : 0.5,
+            yaw : 0,
+            }
 	};
-	addbbox(init_parameters);
-	gui_reset_tag();
+    if(bboxes.exists(bboxes.getTargetIndex(), "PCD")==true){
+    bboxes.selectEmpty();}
+    bboxes.setTarget("PCD",init_parameters);
+	//addbbox(parameters.i,init_parameters);
+	//gui_reset_tag();
     },
     next : function() {
 	labelTool.nextFile();
@@ -118,23 +131,6 @@ labelTool.onLoadData("PCD", function() {
     if(bird_view_flag==true){
     image_array[0].visible = false;
     }
-    if(this.hold_flag==false){
-	for (var k = 0 ; k < parameters.i + 1 ; k++){
-	    gui.removeFolder('BoundingBox'+String(k));
-	    cube_array[k].visible=false;
-	}
-	this.originalBboxes = [];
-	this.bboxes = [];
-	cube_array = [];
-	numbertag_list = [];
-	bb1 = [];
-	gui_tag = [];
-	numbertag_list = [];
-	folder_position = [];
-	folder_size = [];
-	parameters.i = -1;
-    }
-
 });
 
 bboxes.onSelect(function(newIndex, oldIndex) {
@@ -280,26 +276,12 @@ function camera_view(){
 }
 
 //add new bounding box
-bboxes.onAdd(function addbbox(index, read_parameters){
-    labelTool.setPCDBBox(read_parameters);
-    var tmp_parameters =
-	{
-	    x: read_parameters.x,
-	    y: read_parameters.y,
-	    z: read_parameters.z,
-	    delta_x: read_parameters.delta_x,
-	    delta_y: read_parameters.delta_y,
-	    delta_z: read_parameters.delta_z,
-	    width: read_parameters.width,
-	    height: read_parameters.height,
-	    depth: read_parameters.depth,
-	    yaw:read_parameters.yaw,
-	    numbertag:read_parameters.numbertag,
-	    label:read_parameters.label
-	};
-    parameters.i = 1 + parameters.i;
-    var num = parameters.i;
-    var bbox = labelTool.getPCDBBox(num);
+bboxes.onAdd("PCD", function(index, cls, read_parameters){
+    //labelTool.setPCDBBox(read_parameters);
+    //index = 1 + index;
+    var num = index;
+    var bbox = read_parameters;//labelTool.getPCDBBox(num);
+    labelTool.bbox_index.push(index.toString())
     var cubeGeometry = new THREE.CubeGeometry(1.0,1.0,1.0);
     var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0x008866, wireframe:true } );
     cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
@@ -307,16 +289,17 @@ bboxes.onAdd(function addbbox(index, read_parameters){
     cube.scale.set(bbox.width, bbox.height , bbox.depth);
     cube.rotation.z = bbox.yaw;
     scene.add(cube);
-    cube_array.push(cube);
-    addbbox_gui(num);
+    labelTool.cube_array.push(cube);
+    addbbox_gui(bbox,num);
+    return bbox;
 });
 
 //register now bounding box
-function addbbox_gui(num){
+function addbbox_gui(bbox,num){
+    var index = bb1.length
     var bb = gui.addFolder('BoundingBox'+String(num));
-    var bbox = labelTool.getPCDBBox(num);
     bb1.push(bb);
-    var folder1 = bb1[num].addFolder('Position');
+    var folder1 = bb1[index].addFolder('Position');
     var cubeX = folder1.add( bbox, 'x' ).min(-50).max(50).step(0.01).listen();
     var cube_delta_X = folder1.add( bbox, 'delta_x' ).min(-2).max(2).step(0.01).listen();
     var cubeY = folder1.add( bbox, 'y' ).min(-30).max(30).step(0.01).listen();
@@ -326,39 +309,41 @@ function addbbox_gui(num){
     var cubeYaw = folder1.add( bbox, 'yaw' ).min(-Math.PI/2).max(0).step(0.05).listen();
     folder1.close();
     folder_position.push(folder1);
-    var folder2 = bb1[num].addFolder('Size');
+    var folder2 = bb1[index].addFolder('Size');
     var cubeW = folder2.add( bbox, 'width' ).min(0).max(10).step(0.01).listen();
     var cubeH = folder2.add( bbox, 'height' ).min(0).max(10).step(0.01).listen();
     var cubeD = folder2.add( bbox, 'depth' ).min(0).max(10).step(0.01).listen();
     folder2.close();
     folder_size.push(folder2);
-    cubeX.onChange(function(value){cube_array[num].position.x = value;});
-    cubeY.onChange(function(value){cube_array[num].position.y = -value;});
-    cubeZ.onChange(function(value){cube_array[num].position.z = value;});
-    cube_delta_X.onChange(function(value){cube_array[num].position.x = bbox.x + value;});
-    cube_delta_Y.onChange(function(value){cube_array[num].position.y = -bbox.y - value;});
-    cube_delta_Z.onChange(function(value){cube_array[num].position.z = bbox.z + value;});
-    cubeYaw.onChange(function(value){cube_array[num].rotation.z = value;});
-    cubeW.onChange(function(value){cube_array[num].scale.x = value;});
-    cubeH.onChange(function(value){cube_array[num].scale.y = value;});
-    cubeD.onChange(function(value){cube_array[num].scale.z = value;});
+    cubeX.onChange(function(value){labelTool.cube_array[index].position.x = value;});
+    cubeY.onChange(function(value){labelTool.cube_array[index].position.y = -value;});
+    cubeZ.onChange(function(value){labelTool.cube_array[index].position.z = value;});
+    cube_delta_X.onChange(function(value){labelTool.cube_array[index].position.x = bbox.x + value;});
+    cube_delta_Y.onChange(function(value){labelTool.cube_array[index].position.y = -bbox.y - value;});
+    cube_delta_Z.onChange(function(value){labelTool.cube_array[index].position.z = bbox.z + value;});
+    cubeYaw.onChange(function(value){labelTool.cube_array[index].rotation.z = value;});
+    cubeW.onChange(function(value){labelTool.cube_array[index].scale.x = value;});
+    cubeH.onChange(function(value){labelTool.cube_array[index].scale.y = value;});
+    cubeD.onChange(function(value){labelTool.cube_array[index].scale.z = value;});
     var reset_parameters = {
 	reset: function() {
-	    resetCube(num);
+	    resetCube(num,index);
 	},
 	delete: function (){
 	    gui.removeFolder('BoundingBox'+String(num));
-	    cube_array[num].visible=false;
+	    labelTool.cube_array[index].visible=false;
+        bboxes.remove(num,"PCD");
+        //bboxes.selectEmpty();
 	}
     };
 
-    numbertag_list.push(num);
-    labeltag = bb1[num].add( bbox, 'label' ,attribute).name("Attribute");
-    bb1[num].add(reset_parameters, 'reset' ).name("Reset");
-    d = bb1[num].add(reset_parameters, 'delete' ).name("Delete");
+    //numbertag_list.push(num);
+    //labeltag = bb1[num].add( bbox, 'label' ,attribute).name("Attribute");
+    bb1[bb1.length-1].add(reset_parameters, 'reset' ).name("Reset");
+    d = bb1[bb1.length-1].add(reset_parameters, 'delete' ).name("Delete");
 }
 
-//add gui number tag to integrate 2d labeling result
+/*add gui number tag to integrate 2d labeling result
 function gui_add_tag(){
     for (var i = 0 ; i < numbertag_list.length ; i++){
 	tag = bb1[i].add( labelTool.getPCDBBox(i), 'numbertag' ,numbertag_list).name("BoundingBoxTag");
@@ -378,27 +363,28 @@ function gui_reset_tag(){
 	gui_tag.push(tag)
     }
 }
-
+*/
 //reset cube patameter and position
-function resetCube(num)
+function resetCube(index,num)
 {
-    labelTool.bboxes[num].x = labelTool.originalBboxes[num].x;
-    labelTool.bboxes[num].y = labelTool.originalBboxes[num].y;
-    labelTool.bboxes[num].z = labelTool.originalBboxes[num].z;
-    labelTool.bboxes[num].yaw = labelTool.originalBboxes[num].yaw;
-    labelTool.bboxes[num].delta_x = labelTool.originalBboxes[num].delta_x;
-    labelTool.bboxes[num].delta_y = labelTool.originalBboxes[num].delta_y;
-    labelTool.bboxes[num].delta_z = labelTool.originalBboxes[num].delta_z;
-    labelTool.bboxes[num].width = labelTool.originalBboxes[num].width;
-    labelTool.bboxes[num].height = labelTool.originalBboxes[num].height;
-    labelTool.bboxes[num].depth = labelTool.originalBboxes[num].depth;
-    cube_array[num].position.x = labelTool.bboxes[num].x;
-    cube_array[num].position.y = -labelTool.bboxes[num].y;
-    cube_array[num].position.z = labelTool.bboxes[num].z;
-    cube_array[num].rotation.z = labelTool.bboxes[num].yaw;
-    cube_array[num].scale.x = labelTool.bboxes[num].width;
-    cube_array[num].scale.y = labelTool.bboxes[num].height;
-    cube_array[num].scale.z = labelTool.bboxes[num].depth;
+    var reset_bbox = bboxes.get(index,"PCD");
+    reset_bbox.x = reset_bbox.org.x;
+    reset_bbox.y = reset_bbox.org.y;
+    reset_bbox.z = reset_bbox.org.z;
+    reset_bbox.yaw = reset_bbox.org.yaw;
+    reset_bbox.width = reset_bbox.org.width;
+    reset_bbox.height = reset_bbox.org.height;
+    reset_bbox.depth = reset_bbox.org.depth;
+    reset_bbox.delta_x = 0;
+    reset_bbox.delta_y = 0;
+    reset_bbox.delta_z = 0;
+    labelTool.cube_array[num].position.x = reset_bbox.x;
+    labelTool.cube_array[num].position.y = -reset_bbox.y;
+    labelTool.cube_array[num].position.z = reset_bbox.z;
+    labelTool.cube_array[num].rotation.z = reset_bbox.yaw;
+    labelTool.cube_array[num].scale.x = reset_bbox.width;
+    labelTool.cube_array[num].scale.y = reset_bbox.height;
+    labelTool.cube_array[num].scale.z = reset_bbox.depth;
 }
 
 //change window size
@@ -425,15 +411,23 @@ function animate() {
 
     controls.update();
     stats.update();
-    for (var i = 0 ; i < numbertag_list.length; i++){
+    for (var i = 0 ; i < labelTool.cube_array.length; i++){
+    if(labelTool.bbox_index[i]==bboxes.getTargetIndex()){
+        bb1[i].open();
+        folder_position[i].open();
+        folder_size[i].open();
+    }
+    else{
+        bb1[i].close();
+    }
 	if(bb1[i].closed==false){
-	    cube_array[i].material.color.setHex( 0xff0000 );
+	    labelTool.cube_array[i].material.color.setHex( 0xff0000 );
 	    folder_position[i].open();
 	    folder_size[i].open();
 	}
 
 	if(bb1[i].closed==true){
-	    cube_array[i].material.color.setHex( 0x008866 );
+	    labelTool.cube_array[i].material.color.setHex( 0x008866 );
 	}
     }
 }
@@ -470,7 +464,9 @@ function init() {
     canvas3D.appendChild(renderer.domElement);
     stats = new Stats();
     canvas3D.appendChild( stats.dom );
-    window.addEventListener( 'resize', onWindowResize, false );
+    window.addEventListener( 'resize', onWindowResize, false )
+    window.addEventListener("contextmenu", function(e){e.preventDefault();
+                }, false);
 
     window.onmousedown = function (ev){
 	if(bbox_flag==true){
@@ -483,12 +479,12 @@ function init() {
 		var vector = new THREE.Vector3( mouse_down.x, mouse_down.y ,1);
 		vector.unproject( camera );
 		var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
-		var click_object = ray.intersectObjects( cube_array );
+		var click_object = ray.intersectObjects( labelTool.cube_array );
 		if ( click_object.length > 0 ){
 		    click_flag = true;
-		    click_object_index = cube_array.indexOf(click_object[0].object);
+		    click_object_index = labelTool.cube_array.indexOf(click_object[0].object);
 		    click_point = click_object[0].point;
-		    click_cube = cube_array[click_object_index];
+		    click_cube = labelTool.cube_array[click_object_index];
 		    var material = new THREE.MeshBasicMaterial( { color: 0x000000, wireframe:false, transparent: true, opacity : 0.0 } );
 		    var geometry = new THREE.PlaneGeometry(200, 200);
 		    var click_plane = new THREE.Mesh( geometry, material );
@@ -496,33 +492,41 @@ function init() {
 		    click_plane.position.y = click_point.y;
 		    click_plane.position.z = click_point.z;
 		    var normal  = click_object[0].face;
+            if(ev.button==0){
 		    if([normal.a,normal.b,normal.c].toString() == [6,3,2].toString() || [normal.a,normal.b,normal.c].toString() == [7,6,2].toString() ){
 			click_plane.rotation.x = Math.PI / 2;
-			click_plane.rotation.y = cube_array[click_object_index].rotation.z;
+			click_plane.rotation.y = labelTool.cube_array[click_object_index].rotation.z;
 		    }
 		    else if([normal.a,normal.b,normal.c].toString() == [6,7,5].toString() || [normal.a,normal.b,normal.c].toString() == [4,6,5].toString() ){
 			click_plane.rotation.x = -Math.PI / 2;
-			click_plane.rotation.y = -Math.PI / 2 - cube_array[click_object_index].rotation.z;
+			click_plane.rotation.y = -Math.PI / 2 - labelTool.cube_array[click_object_index].rotation.z;
 		    }
 		    else if([normal.a,normal.b,normal.c].toString() == [0,2,1].toString() || [normal.a,normal.b,normal.c].toString() == [2,3,1].toString() ){
 			click_plane.rotation.x = Math.PI / 2;
-			click_plane.rotation.y = Math.PI / 2 + cube_array[click_object_index].rotation.z;
+			click_plane.rotation.y = Math.PI / 2 + labelTool.cube_array[click_object_index].rotation.z;
 		    }
 		    else if([normal.a,normal.b,normal.c].toString() == [5,0,1].toString() || [normal.a,normal.b,normal.c].toString() == [4,5,1].toString() ){
 			click_plane.rotation.x = -Math.PI / 2;
-			click_plane.rotation.y = -cube_array[click_object_index].rotation.z;
+			click_plane.rotation.y = -labelTool.cube_array[click_object_index].rotation.z;
 		    }
 		    else if([normal.a,normal.b,normal.c].toString() == [3,6,4].toString() || [normal.a,normal.b,normal.c].toString() == [1,3,4].toString() ){
 			click_plane.rotation.y = -Math.PI
 		    }
 		    scene.add( click_plane );
-		    click_plane_array.push(click_plane);
+		    click_plane_array.push(click_plane);}
+            else if(ev.button==2){
+                labelTool.cube_array[click_object_index].visible=false;
+                num1 = labelTool.bbox_index[click_object_index];
+                gui.removeFolder('BoundingBox'+String(num1));
+                bboxes.remove(num1,"PCD");
+            }
 		}
 	    }
 	}
     }
 
     window.onmouseup = function(ev) {
+    if(ev.button==0){
 	if(bbox_flag==true){
 	    var rect = ev.target.getBoundingClientRect();
 	    mouse_up.x =  ev.clientX - rect.left;
@@ -534,33 +538,37 @@ function init() {
 	    var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
 	    var click_object = ray.intersectObjects(click_plane_array);
 	    if ( click_object.length > 0 && bb1[click_object_index].closed==false){
+        var click_box = bboxes.get(labelTool.bbox_index[click_object_index],"PCD");
 		var drag_vector = {x:click_object[0].point.x - click_point.x, y:click_object[0].point.y - click_point.y, z:click_object[0].point.z - click_point.z};
-		var yaw_drag_vector = {x:drag_vector.x * Math.cos(-cube_array[click_object_index].rotation.z) - drag_vector.y * Math.sin(-cube_array[click_object_index].rotation.z), y:drag_vector.x * Math.sin(-cube_array[click_object_index].rotation.z) + drag_vector.y * Math.cos(-cube_array[click_object_index].rotation.z), z:drag_vector.z};
-		var judge_click_point = {x:(click_point.x - cube_array[click_object_index].position.x) * Math.cos(-cube_array[click_object_index].rotation.z) - (click_point.y - cube_array[click_object_index].position.y) * Math.sin(-cube_array[click_object_index].rotation.z), y:(click_point.x - cube_array[click_object_index].position.x) * Math.sin(-cube_array[click_object_index].rotation.z) + (click_point.y - cube_array[click_object_index].position.y) * Math.cos(-cube_array[click_object_index].rotation.z)};
-		labelTool.bboxes[click_object_index].width = judge_click_point.x*yaw_drag_vector.x/Math.abs(judge_click_point.x) + labelTool.bboxes[click_object_index].width;
-		labelTool.bboxes[click_object_index].x = drag_vector.x/2 + labelTool.bboxes[click_object_index].x;
-		labelTool.bboxes[click_object_index].height = judge_click_point.y*yaw_drag_vector.y/Math.abs(judge_click_point.y) + labelTool.bboxes[click_object_index].height;
-		labelTool.bboxes[click_object_index].y = -drag_vector.y/2 + labelTool.bboxes[click_object_index].y;
-		labelTool.bboxes[click_object_index].depth = (click_point.z - cube_array[click_object_index].position.z)*drag_vector.z/Math.abs((click_point.z - cube_array[click_object_index].position.z)) + labelTool.bboxes[click_object_index].depth;
-		labelTool.bboxes[click_object_index].z = drag_vector.z/2 + labelTool.bboxes[click_object_index].z;
-		cube_array[click_object_index].position.x = labelTool.bboxes[click_object_index].x;
-		cube_array[click_object_index].position.y = -labelTool.bboxes[click_object_index].y;
-		cube_array[click_object_index].position.z = labelTool.bboxes[click_object_index].z;
-		cube_array[click_object_index].rotation.z = labelTool.bboxes[click_object_index].yaw;
-		cube_array[click_object_index].scale.x = labelTool.bboxes[click_object_index].width;
-		cube_array[click_object_index].scale.y = labelTool.bboxes[click_object_index].height;
-		cube_array[click_object_index].scale.z = labelTool.bboxes[click_object_index].depth;
+		var yaw_drag_vector = {x:drag_vector.x * Math.cos(-labelTool.cube_array[click_object_index].rotation.z) - drag_vector.y * Math.sin(-labelTool.cube_array[click_object_index].rotation.z), y:drag_vector.x * Math.sin(-labelTool.cube_array[click_object_index].rotation.z) + drag_vector.y * Math.cos(-labelTool.cube_array[click_object_index].rotation.z), z:drag_vector.z};
+		var judge_click_point = {x:(click_point.x - labelTool.cube_array[click_object_index].position.x) * Math.cos(-labelTool.cube_array[click_object_index].rotation.z) - (click_point.y - labelTool.cube_array[click_object_index].position.y) * Math.sin(-labelTool.cube_array[click_object_index].rotation.z), y:(click_point.x - labelTool.cube_array[click_object_index].position.x) * Math.sin(-labelTool.cube_array[click_object_index].rotation.z) + (click_point.y - labelTool.cube_array[click_object_index].position.y) * Math.cos(-labelTool.cube_array[click_object_index].rotation.z)};
+		click_box.width = judge_click_point.x*yaw_drag_vector.x/Math.abs(judge_click_point.x) + click_box.width;
+		click_box.x = drag_vector.x/2 + click_box.x;
+		click_box.height = judge_click_point.y*yaw_drag_vector.y/Math.abs(judge_click_point.y) + click_box.height;
+		click_box.y = -drag_vector.y/2 + click_box.y;
+		click_box.depth = (click_point.z - labelTool.cube_array[click_object_index].position.z)*drag_vector.z/Math.abs((click_point.z - labelTool.cube_array[click_object_index].position.z)) + click_box.depth;
+		click_box.z = drag_vector.z/2 + click_box.z;
+		labelTool.cube_array[click_object_index].position.x = click_box.x;
+		labelTool.cube_array[click_object_index].position.y = -click_box.y;
+		labelTool.cube_array[click_object_index].position.z = click_box.z;
+		labelTool.cube_array[click_object_index].rotation.z = click_box.yaw;
+		labelTool.cube_array[click_object_index].scale.x = click_box.width;
+		labelTool.cube_array[click_object_index].scale.y = click_box.height;
+		labelTool.cube_array[click_object_index].scale.z = click_box.depth;
 	    }
 	    if(click_flag==true){
 		click_plane_array = [];
-		for(var i = 0 ; i < bb1.length; i++){
-		    bb1[i].close();
-		}
-		bb1[click_object_index].open();
-		folder_position[click_object_index].open();
-		folder_size[click_object_index].open();
+        bboxes.select(labelTool.bbox_index[click_object_index],"PCD")
+        click_flag = false;
+		//for(var i = 0 ; i < bb1.length; i++){
+		//    bb1[i].close();
+		//}
+		//bb1[click_object_index].open();
+		//folder_position[click_object_index].open();
+		//folder_size[click_object_index].open();
+        //
 	    }
-	}
+	}}
     }
 
     gui.add(parameters, 'addbboxpara').name("AddBoundingBox");
