@@ -32,9 +32,6 @@ var parameters = {
 	    x : 1,
 	    y : 0,
 	    z : -1,
-	    delta_x : 0,
-	    delta_y : 0,
-	    delta_z : 0,
 	    width : 0.5,
 	    height : 0.5,
 	    depth : 0.5,
@@ -43,9 +40,6 @@ var parameters = {
             x : 1,
             y : 0,
             z : -1,
-            delta_x : 0,
-            delta_y : 0,
-            delta_z : 0,
             width : 0.5,
             height : 0.5,
             depth : 0.5,
@@ -317,11 +311,8 @@ function addbbox_gui(bbox,num){
     bb1.push(bb);
     var folder1 = bb1[index].addFolder('Position');
     var cubeX = folder1.add( bbox, 'x' ).min(-50).max(50).step(0.01).listen();
-    var cube_delta_X = folder1.add( bbox, 'delta_x' ).min(-2).max(2).step(0.01).listen();
     var cubeY = folder1.add( bbox, 'y' ).min(-30).max(30).step(0.01).listen();
-    var cube_delta_Y = folder1.add( bbox, 'delta_y' ).min(-2).max(2).step(0.01).listen();
     var cubeZ = folder1.add( bbox, 'z' ).min(-3).max(10).step(0.01).listen();
-    var cube_delta_Z = folder1.add( bbox, 'delta_z' ).min(-2).max(2).step(0.01).listen();
     var cubeYaw = folder1.add( bbox, 'yaw' ).min(-Math.PI/2).max(0).step(0.05).listen();
     folder1.close();
     folder_position.push(folder1);
@@ -334,9 +325,6 @@ function addbbox_gui(bbox,num){
     cubeX.onChange(function(value){labelTool.cube_array[index].position.x = value;});
     cubeY.onChange(function(value){labelTool.cube_array[index].position.y = -value;});
     cubeZ.onChange(function(value){labelTool.cube_array[index].position.z = value;});
-    cube_delta_X.onChange(function(value){labelTool.cube_array[index].position.x = bbox.x + value;});
-    cube_delta_Y.onChange(function(value){labelTool.cube_array[index].position.y = -bbox.y - value;});
-    cube_delta_Z.onChange(function(value){labelTool.cube_array[index].position.z = bbox.z + value;});
     cubeYaw.onChange(function(value){labelTool.cube_array[index].rotation.z = value;});
     cubeW.onChange(function(value){labelTool.cube_array[index].scale.x = value;});
     cubeH.onChange(function(value){labelTool.cube_array[index].scale.y = value;});
@@ -391,9 +379,6 @@ function resetCube(index,num)
     reset_bbox.width = reset_bbox.org.width;
     reset_bbox.height = reset_bbox.org.height;
     reset_bbox.depth = reset_bbox.org.depth;
-    reset_bbox.delta_x = 0;
-    reset_bbox.delta_y = 0;
-    reset_bbox.delta_z = 0;
     labelTool.cube_array[num].position.x = reset_bbox.x;
     labelTool.cube_array[num].position.y = -reset_bbox.y;
     labelTool.cube_array[num].position.z = reset_bbox.z;
