@@ -64,6 +64,7 @@ var labelTool = {
 	    this.hasLoadedImage = true;
 	}
 	if (this.selectedDataType == "PCD" && !this.hasLoadedPCD) {
+	    this.localOnLoadData["Image"]();
 	    this.localOnLoadData["PCD"]();
 	    this.hasLoadedPCD = true;
 	}
