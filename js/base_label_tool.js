@@ -556,7 +556,7 @@ var labelTool = {
 	this.curFile = fileNumber;
 	this.pageBox.placeholder = (this.curFile + 1) + "/" + this.fileNames.length;
 	this.pageBox.value = "";
-	if (this.dataTypes.indexOf("PCD") >= 0){
+	if (this.dataTypes.indexOf("PCD") >= 0 && this.hold_flag==false){
 	for (var k = 0 ; k < this.cube_array.length ; k++){
 		gui.removeFolder('BoundingBox'+String(this.bbox_index[k]));
 		this.cube_array[k].visible=false;
