@@ -24,6 +24,9 @@ var isIsolated = false;
 /*********** Event handlers **************/
 
 bboxes.onRemove("Image", function(index) {
+    if (!bboxes.exists(index, "Image")) {
+	return;
+    }
     removeEmphasis(index);
     removeTextBox(index);
     bboxes.get(index, "Image")["rect"].remove();
@@ -35,7 +38,7 @@ bboxes.onSelect("Image", function(newIndex, oldIndex) {
     addTextBox(newIndex);
     emphasisBBox(newIndex);
     if (isIsolated) {
-	Isolate();
+	Isolate(newIndex);
     }
 });
 
@@ -71,6 +74,9 @@ labelTool.onLoadData("Image", function() {
 });
 
 bboxes.onChangeClass("Image", function(index, newClass) {
+    if (!bboxes.exists(index, "Image")) {
+	return;
+    }
     var bbox = bboxes.get(index, "Image");
     var color = classes[newClass].color;
     bbox["rect"].attr({stroke: color});
@@ -79,8 +85,8 @@ bboxes.onChangeClass("Image", function(index, newClass) {
 	textBox["text"].attr({text: bboxString(index, newClass)});
 	var box = textBox["text"].getBBox();
 	textBox["box"].attr({fill: color,
-				 stroke: "none",
-				 width: box.width});
+			     stroke: "none",
+			     width: box.width});
     }
 });
 
@@ -91,6 +97,9 @@ $(window).keydown(function(e) {
     var isFrameSelectFunction = e.which == 66 || e.which == 78;
     var rect;
     if (isRectModifyFunction) {
+	if (labelTool.getTargetDataType() != "Image") {
+	    return;
+	}
 	if (bboxes.getTarget("Image") == undefined) {
 	    return;
 	} else {
@@ -101,12 +110,13 @@ $(window).keydown(function(e) {
     if (e.shiftKey) {
 	keyCode += "SHIFT";
     }
+    var minsize = classes.target().minSize;
     switch (keyCode) {
 	case "37SHIFT": // left arrow + shift
-	    rect.attr({width: Math.max(rect.attr("width") - 1, 0)});
+	    rect.attr({width: Math.max(rect.attr("width") - 1, minsize.x)});
 	    break;
 	case "38SHIFT": // up arrow + shift
-	    rect.attr({height: Math.max(rect.attr("height") - 1, 0)});
+	    rect.attr({height: Math.max(rect.attr("height") - 1, minsize.y)});
 	    break;
 	case "39SHIFT": // right arrow + shift
 	    rect.attr({width: Math.min(rect.attr("width") + 1, c.width - rect.attr("x"))});
@@ -127,10 +137,10 @@ $(window).keydown(function(e) {
 	    rect.attr({y: Math.min(rect.attr("y") + 1, c.height - rect.attr("height"))});
 	    break;
 	case "78": // N
-	    labelTool.nextFile();
+	    labelTool.nextFrame();
 	    break;
 	case "66": // B
-	    labelTool.previousFile();
+	    labelTool.previousFrame();
 	    break;
 	case "9": // Tab
 	    bboxes.selectNext();
@@ -234,10 +244,10 @@ function addEventsToImage() {
 	}
 	var index = getClickedIndex(e2);
 	if (index != -1) {
-	    bboxes.remove(index, "Image");
 	    if (index != bboxes.getTargetIndex()) {
 		bboxes.select(index);
 	    }
+	    bboxes.remove(index, "Image");
 	    setAction(e2);
 	}
     });
@@ -419,9 +429,15 @@ function toggleIsolation() {
     isIsolated = !isIsolated;
 }
 
-function Isolate() {
+function Isolate(index) {
+    var targetIndex;
+    if (index == undefined) {
+	targetIndex = bboxes.getTargetIndex();
+    } else {
+	targetIndex = index;
+    }
     for (var i = 0; i < bboxes.length(); ++i) {
-	if (i != bboxes.getTargetIndex()) {
+	if (i != targetIndex) {
 	    hideImageBBox(i);
 	} else {
 	    showImageBBox(i);

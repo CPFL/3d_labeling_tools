@@ -680,6 +680,10 @@ var labelTool = {
      *     }
      * */
 
+    getTargetDataType: function() {
+	return this.selectedDataType;
+    },
+
     handlePressKey: function(code, value) {
 	if(code === 13) {
 	    this.jumpFrame();
