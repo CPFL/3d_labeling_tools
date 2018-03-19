@@ -563,7 +563,6 @@ var labelTool = {
 	}}
 	if (this.hasPCD && this.hasLoadedPCD) {
 	    ground_mesh.visible = false;
-	    image_array[0].visible = false;
 	    if(this.hold_flag==false){
 		this.bboxes = [];
 		this.cube_array = [];
