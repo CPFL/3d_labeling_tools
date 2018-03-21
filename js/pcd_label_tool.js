@@ -394,21 +394,23 @@ function animate() {
     else{
         bb1[i].close();
     }
-	if(bb1[i].closed==false){
-	    labelTool.cube_array[i].material.color.setHex( 0xff0000 );
-	    folder_position[i].open();
-	    folder_size[i].open();
-	}
-
-	if(bb1[i].closed==true){
-	    labelTool.cube_array[i].material.color.setHex( 0x008866 );
-	}
     if(i==copy_bbox_index && c_flag==true){
         labelTool.cube_array[i].material.color.setHex( 0xffff00 );
     }
-    if(i==rotation_bbox_index && r_flag==true){
-        labelTool.cube_array[i].material.color.setHex( 0xff8000 );
+	else if(bb1[i].closed==false){
+        if(i==rotation_bbox_index && r_flag==true){
+            labelTool.cube_array[i].material.color.setHex( 0xff8000 );
+        }
+        else{
+	    labelTool.cube_array[i].material.color.setHex( 0xff0000 );
+	    folder_position[i].open();
+	    folder_size[i].open();
     }
+	}
+
+	else if(bb1[i].closed==true){
+	    labelTool.cube_array[i].material.color.setHex( 0x008866 );
+	   }
     }
     renderer.render(scene, camera);
 }
