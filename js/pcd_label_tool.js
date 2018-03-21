@@ -261,13 +261,13 @@ function addbbox_gui(bbox,num){
         labelTool.cube_array[index].position.x = labelTool.cube_array[index].position.x+(value-labelTool.cube_array[index].scale.x)*Math.cos(labelTool.cube_array[index].rotation.z)/2;
         bbox.x=labelTool.cube_array[index].position.x;
         labelTool.cube_array[index].position.y = labelTool.cube_array[index].position.y+(value-labelTool.cube_array[index].scale.x)*Math.sin(labelTool.cube_array[index].rotation.z)/2;
-        bbox.y=labelTool.cube_array[index].position.y;
+        bbox.y=-labelTool.cube_array[index].position.y;
         labelTool.cube_array[index].scale.x = value;});
     cubeH.onChange(function(value){
         labelTool.cube_array[index].position.x = labelTool.cube_array[index].position.x+(value-labelTool.cube_array[index].scale.y)*Math.sin(labelTool.cube_array[index].rotation.z)/2;
         bbox.x=labelTool.cube_array[index].position.x;
         labelTool.cube_array[index].position.y = labelTool.cube_array[index].position.y-(value-labelTool.cube_array[index].scale.y)*Math.cos(labelTool.cube_array[index].rotation.z)/2;
-        bbox.y=labelTool.cube_array[index].position.y;
+        bbox.y=-labelTool.cube_array[index].position.y;
         labelTool.cube_array[index].scale.y = value;});
     cubeD.onChange(function(value){labelTool.cube_array[index].position.z = labelTool.cube_array[index].position.z+(value-labelTool.cube_array[index].scale.z)/2;
         bbox.z=labelTool.cube_array[index].position.z;
