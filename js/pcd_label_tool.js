@@ -201,6 +201,7 @@ function data_load() {
 }
 //save data
 function save() {
+    ground_mesh.visible = false;
     labelTool.changeFrame(labelTool.curFile)
     alert("save!!");
 }
