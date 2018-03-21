@@ -245,7 +245,7 @@ function addbbox_gui(bbox,num){
     var cubeX = folder1.add( bbox, 'x' ).min(-50).max(50).step(0.01).listen();
     var cubeY = folder1.add( bbox, 'y' ).min(-30).max(30).step(0.01).listen();
     var cubeZ = folder1.add( bbox, 'z' ).min(-3).max(10).step(0.01).listen();
-    var cubeYaw = folder1.add( bbox, 'yaw' ).min(-Math.PI/2).max(0).step(0.05).listen();
+    var cubeYaw = folder1.add( bbox, 'yaw' ).min(-Math.PI).max(Math.PI).step(0.05).listen();
     folder1.close();
     folder_position.push(folder1);
     var folder2 = bb1[index].addFolder('Size');
@@ -258,9 +258,15 @@ function addbbox_gui(bbox,num){
     cubeY.onChange(function(value){labelTool.cube_array[index].position.y = -value;});
     cubeZ.onChange(function(value){labelTool.cube_array[index].position.z = value;});
     cubeYaw.onChange(function(value){labelTool.cube_array[index].rotation.z = value;});
-    cubeW.onChange(function(value){labelTool.cube_array[index].scale.x = value;});
-    cubeH.onChange(function(value){labelTool.cube_array[index].scale.y = value;});
-    cubeD.onChange(function(value){labelTool.cube_array[index].scale.z = value;});
+    cubeW.onChange(function(value){labelTool.cube_array[index].position.x = labelTool.cube_array[index].position.x+(value-labelTool.cube_array[index].scale.x)/2;
+        bbox.x=labelTool.cube_array[index].position.x;
+        labelTool.cube_array[index].scale.x = value;});
+    cubeH.onChange(function(value){labelTool.cube_array[index].position.y = labelTool.cube_array[index].position.y+(-value+labelTool.cube_array[index].scale.y)/2;
+        bbox.y=labelTool.cube_array[index].position.y;
+        labelTool.cube_array[index].scale.y = value;});
+    cubeD.onChange(function(value){labelTool.cube_array[index].position.z = labelTool.cube_array[index].position.z+(value-labelTool.cube_array[index].scale.z)/2;
+        bbox.z=labelTool.cube_array[index].position.z;
+        labelTool.cube_array[index].scale.z = value;});
     var reset_parameters = {
 	reset: function() {
 	    resetCube(num,index);
