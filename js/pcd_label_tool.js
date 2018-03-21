@@ -135,6 +135,13 @@ function readYAMLFile(filename) {
                        [parseFloat(Camera_param[8]),parseFloat(Camera_param[9]),parseFloat(Camera_param[10]),parseFloat(Camera_param[11])],
                        [0,0,0,1]];
             CameraEx_flag = false;
+            if(isNaN(invMax(labelTool.CameraExMat)[0][0])==true){
+                alert("calibration parameter is wrong");
+            labelTool.CameraExMat = [[1,0,0,0],
+                       [parseFloat(Camera_param[4]),parseFloat(Camera_param[5]),parseFloat(Camera_param[6]),parseFloat(Camera_param[7])],
+                       [parseFloat(Camera_param[8]),parseFloat(Camera_param[9]),parseFloat(Camera_param[10]),parseFloat(Camera_param[11])],
+                       [0,0,0,1]];
+            }
             break
             }
         }
@@ -146,42 +153,32 @@ function readYAMLFile(filename) {
 
 //calicurate inverce matrix
 function invMax(inMax){
-    var a = new Array(4);
-    for(i = 0 ; i < 4 ; i++ ){
-    a[i] = new Array(4);
-    for(j = 0; j < 4; j++){
-            a[i][j] = inMax[i][j];
-    }
-    }
-    var c = a.length;
-    var buf;
-    var i, j, k;
-    var inv = new Array(c);
-    for(i = 0 ; i < c ; i++ ){
-    inv[i] = new Array(c);
-    for(j = 0; j < c; j++){
-        inv[i][j] = (i == j)?1.0:0.0;
-    }
-    }
+det = (inMax[0][0] * inMax[1][1] * inMax[2][2] * inMax[3][3] ) + (inMax[0][0] * inMax[1][2] * inMax[2][3] * inMax[3][1] ) + (inMax[0][0] * inMax[1][3] * inMax[2][1] * inMax[3][2] )
+    - (inMax[0][0] * inMax[1][3] * inMax[2][2] * inMax[3][1] ) - (inMax[0][0] * inMax[1][2] * inMax[2][1] * inMax[3][3] ) - (inMax[0][0] * inMax[1][1] * inMax[2][3] * inMax[3][2] )
+    - (inMax[0][1] * inMax[1][0] * inMax[2][2] * inMax[3][3] ) - (inMax[0][2] * inMax[1][0] * inMax[2][3] * inMax[3][1] ) - (inMax[0][3] * inMax[1][0] * inMax[2][1] * inMax[3][2] )
+    + (inMax[0][3] * inMax[1][0] * inMax[2][2] * inMax[3][1] ) + (inMax[0][2] * inMax[1][0] * inMax[2][1] * inMax[3][3] ) + (inMax[0][1] * inMax[1][0] * inMax[2][3] * inMax[3][2] )
+    + (inMax[0][1] * inMax[1][2] * inMax[2][0] * inMax[3][3] ) + (inMax[0][2] * inMax[1][3] * inMax[2][0] * inMax[3][1] ) + (inMax[0][3] * inMax[1][1] * inMax[2][0] * inMax[3][2] )
+    - (inMax[0][3] * inMax[1][2] * inMax[2][0] * inMax[3][1] ) - (inMax[0][2] * inMax[1][1] * inMax[2][0] * inMax[3][3] ) - (inMax[0][1] * inMax[1][3] * inMax[2][0] * inMax[3][2] )
+    - (inMax[0][1] * inMax[1][2] * inMax[2][3] * inMax[3][0] ) - (inMax[0][2] * inMax[1][3] * inMax[2][1] * inMax[3][0] ) - (inMax[0][3] * inMax[1][1] * inMax[2][2] * inMax[3][0] )
+    + (inMax[0][3] * inMax[1][2] * inMax[2][1] * inMax[3][0] ) + (inMax[0][2] * inMax[1][1] * inMax[2][3] * inMax[3][0] ) + (inMax[0][1] * inMax[1][3] * inMax[2][2] * inMax[3][0] );
+    var inv00 = (inMax[1][1]*inMax[2][2]*inMax[3][3] + inMax[1][2]*inMax[2][3]*inMax[3][1] + inMax[1][3]*inMax[2][1]*inMax[3][2] - inMax[1][3]*inMax[2][2]*inMax[3][1] - inMax[1][2]*inMax[2][1]*inMax[3][3] - inMax[1][1]*inMax[2][3]*inMax[3][2])/det;
+    var inv01 = (-inMax[0][1]*inMax[2][2]*inMax[3][3] - inMax[0][2]*inMax[2][3]*inMax[3][1] - inMax[0][3]*inMax[2][1]*inMax[3][2] + inMax[0][3]*inMax[2][2]*inMax[3][1] + inMax[0][2]*inMax[2][1]*inMax[3][3] + inMax[0][1]*inMax[2][3]*inMax[3][2])/det;
+    var inv02 = (inMax[0][1]*inMax[1][2]*inMax[3][3] + inMax[0][2]*inMax[1][3]*inMax[3][1] + inMax[0][3]*inMax[1][1]*inMax[3][2] - inMax[0][3]*inMax[1][2]*inMax[3][1] - inMax[0][2]*inMax[1][1]*inMax[3][3] - inMax[0][1]*inMax[1][3]*inMax[3][2])/det;
+    var inv03 = (-inMax[0][1]*inMax[1][2]*inMax[2][3] - inMax[0][2]*inMax[1][3]*inMax[2][1] - inMax[0][3]*inMax[1][1]*inMax[2][2] + inMax[0][3]*inMax[1][2]*inMax[2][1] + inMax[0][2]*inMax[1][1]*inMax[2][3] + inMax[0][1]*inMax[1][3]*inMax[2][2])/det;
+    var inv10 = (-inMax[1][0]*inMax[2][2]*inMax[3][3] - inMax[1][2]*inMax[2][3]*inMax[3][0] - inMax[1][3]*inMax[2][0]*inMax[3][2] + inMax[1][3]*inMax[2][2]*inMax[3][0] + inMax[1][2]*inMax[2][0]*inMax[3][3] + inMax[1][0]*inMax[2][3]*inMax[3][2])/det;
+    var inv11 = (inMax[0][0]*inMax[2][2]*inMax[3][3] + inMax[0][2]*inMax[2][3]*inMax[3][0] + inMax[0][3]*inMax[2][0]*inMax[3][2] - inMax[0][3]*inMax[2][2]*inMax[3][0] - inMax[0][2]*inMax[2][0]*inMax[3][3] - inMax[0][0]*inMax[2][3]*inMax[3][2])/det;
+    var inv12 = (-inMax[0][0]*inMax[1][2]*inMax[3][3] - inMax[0][2]*inMax[1][3]*inMax[3][0] - inMax[0][3]*inMax[1][0]*inMax[3][2] + inMax[0][3]*inMax[1][2]*inMax[3][0] + inMax[0][2]*inMax[1][0]*inMax[3][3] + inMax[0][0]*inMax[1][3]*inMax[3][2])/det;
+    var inv13 = (inMax[0][0]*inMax[1][2]*inMax[2][3] + inMax[0][2]*inMax[1][3]*inMax[2][0] + inMax[0][3]*inMax[1][0]*inMax[2][2] - inMax[0][3]*inMax[1][2]*inMax[2][0] - inMax[0][2]*inMax[1][0]*inMax[2][3] - inMax[0][0]*inMax[1][3]*inMax[2][2])/det;
+    var inv20 = (inMax[1][0]*inMax[2][1]*inMax[3][3] + inMax[1][1]*inMax[2][3]*inMax[3][0] + inMax[1][3]*inMax[2][0]*inMax[3][1] - inMax[1][3]*inMax[2][1]*inMax[3][0] - inMax[1][1]*inMax[2][0]*inMax[3][3] - inMax[1][0]*inMax[2][3]*inMax[3][1])/det;
+    var inv21 = (-inMax[0][0]*inMax[2][1]*inMax[3][3] - inMax[0][1]*inMax[2][3]*inMax[3][0] - inMax[0][3]*inMax[2][0]*inMax[3][1] + inMax[0][3]*inMax[2][1]*inMax[3][0] + inMax[0][1]*inMax[2][0]*inMax[3][3] + inMax[0][0]*inMax[2][3]*inMax[3][1])/det;
+    var inv22 = (inMax[0][0]*inMax[1][1]*inMax[3][3] + inMax[0][1]*inMax[1][3]*inMax[3][0] + inMax[0][3]*inMax[1][0]*inMax[3][1] - inMax[0][3]*inMax[1][1]*inMax[3][0] - inMax[0][1]*inMax[1][0]*inMax[3][3] - inMax[0][0]*inMax[1][3]*inMax[3][1])/det;
+    var inv23 = (-inMax[0][0]*inMax[1][1]*inMax[2][3] - inMax[0][1]*inMax[1][3]*inMax[2][0] - inMax[0][3]*inMax[1][0]*inMax[2][1] + inMax[0][3]*inMax[1][1]*inMax[2][0] + inMax[0][1]*inMax[1][0]*inMax[2][3] + inMax[0][0]*inMax[1][3]*inMax[2][1])/det;
+    var inv30 = (-inMax[1][0]*inMax[2][1]*inMax[3][2] - inMax[1][1]*inMax[2][2]*inMax[3][0] - inMax[1][2]*inMax[2][0]*inMax[3][1] + inMax[1][2]*inMax[2][1]*inMax[3][0] + inMax[1][1]*inMax[2][0]*inMax[3][2] + inMax[1][0]*inMax[2][2]*inMax[3][1])/det;
+    var inv31 = (inMax[0][0]*inMax[2][1]*inMax[3][2] + inMax[0][1]*inMax[2][2]*inMax[3][0] + inMax[0][2]*inMax[2][0]*inMax[3][1] - inMax[0][2]*inMax[2][1]*inMax[3][0] - inMax[0][1]*inMax[2][0]*inMax[3][2] - inMax[0][0]*inMax[2][2]*inMax[3][1])/det;
+    var inv32 = (-inMax[0][0]*inMax[1][1]*inMax[3][2] - inMax[0][1]*inMax[1][2]*inMax[3][0] - inMax[0][2]*inMax[1][0]*inMax[3][1] + inMax[0][2]*inMax[1][1]*inMax[3][0] + inMax[0][1]*inMax[1][0]*inMax[3][2] + inMax[0][0]*inMax[1][2]*inMax[3][1])/det;
+    var inv33 = (inMax[0][0]*inMax[1][1]*inMax[2][2] + inMax[0][1]*inMax[1][2]*inMax[2][0] + inMax[0][2]*inMax[1][0]*inMax[2][1] - inMax[0][2]*inMax[1][1]*inMax[2][0] - inMax[0][1]*inMax[1][0]*inMax[2][2] - inMax[0][0]*inMax[1][2]*inMax[2][1])/det;
 
-    for(i = 0; i < c; i++){
-    buf = 1/a[i][i];
-    for(j = 0 ; j < c ; j++){
-        a[i][j] *= buf;
-        inv[i][j] *= buf;
-    }
-
-    for(j = 0 ; j < c ; j++){
-        if(i != j){
-        buf = a[j][i];
-        for(k = 0 ; k < c ; k++){
-            a[j][k] -= a[i][k]*buf;
-            inv[j][k] -= inv[i][k]*buf;
-        }
-        }
-    }
-    }
-
+    inv = [[inv00,inv01,inv02,inv03],[inv10,inv11,inv12,inv13],[inv20,inv21,inv22,inv23],[inv30,inv31,inv32,inv33]]
     return inv;
 }
 
