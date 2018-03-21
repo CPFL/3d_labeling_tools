@@ -25,7 +25,6 @@ var bird_view_flag = true;
 var move_flag = false;
 var cls = 0;
 var c_flag = false;
-var copy_box;
 var copy_bbox_index;
 var r_flag = false;
 var copy_box;
@@ -378,6 +377,7 @@ function animate() {
             c_flag=true
         }}
         else{
+            copy_bbox_index = -1
             c_flag=false;
         }}
     if ( keyboard.down("R")){
@@ -388,6 +388,7 @@ function animate() {
             r_flag=true;
         }}
         else{
+            rotation_bbox_index = -1
             r_flag=false;
     }}
 
