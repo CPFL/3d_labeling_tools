@@ -202,9 +202,8 @@ function data_load() {
 }
 //save data
 function save() {
-    labelTool.previousFrame();
+    labelTool.changeFrame(labelTool.curFile)
     alert("save!!");
-    labelTool.nextFrame();
 }
 
 //change camera position to bird view position
