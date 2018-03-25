@@ -1,3 +1,4 @@
+
 var canvas = document.getElementById("jpeg-label-canvas");
 var c = {};
 var paper = Raphael(canvas, c.width, c.height);
@@ -63,7 +64,7 @@ labelTool.onInitialize("Image", function() {
 });
 
 labelTool.onLoadData("Image", function() {
-    var imgURL = labelTool.workBlob + "/JPEGImages/" + labelTool.getTargetFileName() + ".jpg";
+    var imgURL = labelTool.workBlob + "/JPEGImages" + labelTool.getCameraName() + "/" + labelTool.getTargetFileName() + ".jpg";
     if (img != undefined) {
 	img.remove();
     }

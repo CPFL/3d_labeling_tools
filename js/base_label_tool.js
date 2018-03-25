@@ -3,6 +3,8 @@ var labelTool = {
     workBlob: '',         // Base url of blob
     curFile: 0,           // Base name of current file
     fileNames: [],         // List of basenames of the files
+    curCamera: 2,
+    cameraNames: [],
     labelId: -1,          // Initialize with 'setParameters'
     hasImage: false,      // Initialize with 'setParameters'
     hasPCD: false,        // Initialize with 'setParameters'
@@ -22,6 +24,7 @@ var labelTool = {
     CameraExMat: [],
     cube_array: [],
     bbox_index : [],
+    ids: [],
 
     /********** Externally defined functions **********
      * Define these functions in the labeling tools.
@@ -151,6 +154,7 @@ var labelTool = {
 			height: tmpHeight,
 			depth: tmpDepth,
 			yaw: parseFloat(annotation.rotation_y),
+			id: annotation.id,
 			org: original = {
 				x: readMat[0],
 			    y: -readMat[1],
@@ -158,15 +162,15 @@ var labelTool = {
 			    width: tmpWidth,
 			    height: tmpHeight,
 			    depth: tmpDepth,
-			    yaw: parseFloat(annotation.rotation_y)}
-		    };
+			    yaw: parseFloat(annotation.rotation_y),
+				id:annotation.id}};
 		    //addbbox(readfile_parameters, index); // TODO? -> bboxes.onAdd
 		    //bboxes.selectEmpty();
 		    bboxes.set(i,"PCD", params);
 		    //bboxes.setTarget("PCD", params, label);
 		    hasLabel["PCD"] = true;
-		}
-	    } /* else {
+		}}
+	     /* else {
 		 annotations[i].truncated = 0;
 		 annotations[i].occluded = 3;
 		 annotations[i].alpha = 0;
@@ -180,8 +184,7 @@ var labelTool = {
 		 }*/
 	    if (!hasLabel["Image"] && !hasLabel["PCD"]) {
 		bboxes.pop();
-	    }
-	}
+	    }}
 	// Backup initial positions.
 	this.originalAnnotations = this.createAnnotations();
 	/* this.originalAnnotations = annotations;*/ // This is better but messed by 1px diffs.
@@ -205,7 +208,8 @@ var labelTool = {
 			      x: 0,
 			      y: 0,
 			      z: 0,
-			      rotation_y: 0};
+			      rotation_y: 0,
+			      id:""};
 	    if (!bboxes.exists(i, "Image") && !bboxes.exists(i, "PCD")) {
 		continue;
 	    }
@@ -233,6 +237,7 @@ var labelTool = {
 		annotation["y"] = resultMat[1];
 		annotation["z"] = resultMat[2];
 		annotation["rotation_y"] = this.cube_array[anno_index].rotation.z;
+		annotation["id"] = this.ids[anno_index];
 	    }
 	    annotations.push(annotation);
 	}
@@ -300,7 +305,7 @@ var labelTool = {
 	    url: '/label/annotations/',
 	    type: 'GET',
 	    dataType: 'json',
-	    data: {file_name: fileName, label_id: this.labelId},
+	    data: {file_name: fileName, label_id: this.labelId, camera_name: this.cameraNames[this.curCamera]},
 	    success: function(res) {
 		if (targetFile == this.curFile) {
 		    this.loadAnnotations(res);
@@ -319,12 +324,14 @@ var labelTool = {
 	}
 	this.pending = true;
 	var fileName = this.fileNames[this.curFile];
+	var cameraName = this.cameraNames[this.curCamera];
 	var fileNumber = this.curFile;
 	request({
 	    url: '/label/annotations/',
 	    type: 'POST',
 	    dataType: 'html',
 	    data: {file_name: fileName + ".txt",
+	       camera_name: cameraName,
 		   annotations: JSON.stringify(annotations),
 		   label_id: this.labelId},
 	    success: function(res) {
@@ -401,6 +408,7 @@ var labelTool = {
 		var dict = JSON.parse(res.responseText);
 		this.originalSize[0] = dict.width;
 		this.originalSize[1] = dict.height;
+		this.getCameraNames();
 		this.getFileNames();
 	    }.bind(this)
 	    /* ,fail: function(res) {
@@ -423,6 +431,20 @@ var labelTool = {
 		this.initialize();
 		this.showData();
 		this.getAnnotations();
+	    }.bind(this)
+	});
+    },
+
+
+    getCameraNames() {
+	request({
+	    url: "/label/camera_names/",
+	    type: "GET",
+	    dataType: "json",
+	    data: {label_id: this.labelId},
+	    complete: function(res) {
+		var dict = JSON.parse(res.responseText);
+		this.cameraNames = dict["camera_names"];
 	    }.bind(this)
 	});
     },
@@ -453,6 +475,10 @@ var labelTool = {
 
     getTargetFileName: function() {
 	return this.fileNames[this.curFile];
+    },
+
+    getCameraName: function() {
+	return this.cameraNames[this.curCamera];
     },
     /* 
      *     getImageBBox: function(index) {

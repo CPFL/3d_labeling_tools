@@ -34,6 +34,12 @@ var parameters = {
     save : function() {
     save();
     },
+    rightCamera : function() {
+    rightCamera();
+    },
+    leftCamera : function() {
+    leftCamera();
+    },
     i : -1,
     flame : now_flame,
     image_checkbox : true,
@@ -202,7 +208,21 @@ function save() {
     labelTool.changeFrame(labelTool.curFile)
     alert("save!!");
 }
-
+function rightCamera() {
+    if(labelTool.curCamera==0){
+    labelTool.curCamera = 4}
+    else{
+    labelTool.curCamera = (labelTool.curCamera - 1)%5}
+    ground_mesh.visible = false;
+    labelTool.changeFrame(labelTool.curFile)
+    setCamera();
+}
+function leftCamera() {
+    labelTool.curCamera = (labelTool.curCamera + 1)%5
+    ground_mesh.visible = false;
+    labelTool.changeFrame(labelTool.curFile)
+    setCamera();
+}
 //change camera position to bird view position
 function bird_view() {
     bird_view_flag = true;
@@ -282,7 +302,9 @@ function addbbox_gui(bbox,num){
     };
 
     //numbertag_list.push(num);
-    //labeltag = bb1[num].add( bbox, 'label' ,attribute).name("Attribute");
+    labeltag = bb1[bb1.length-1].add( bbox, 'id').name("ID").listen();
+    labelTool.ids.push(bbox.id)
+    labeltag.onChange(function(value){labelTool.ids[index] = value})
     bb1[bb1.length-1].add(reset_parameters, 'reset' ).name("Reset");
     d = bb1[bb1.length-1].add(reset_parameters, 'delete' ).name("Delete");
 }
@@ -318,13 +340,19 @@ function onWindowResize() {
 function setCamera() {
     if(bird_view_flag==false){
     camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 0.01, 10000 );
-    camera.position.set(0,0,0.5);
-    camera.up.set(0,0,1);
+    camera.position.set(0,0,0);
+    camera.up.set(0, 0, 1);
+    angle = 2*Math.PI*(labelTool.curCamera-2)/5;
+    camera.lookAt(new THREE.Vector3(Math.cos(angle), Math.sin(angle), 0));
+    var conx = Math.cos(angle);
+    var cony = Math.sin(angle);
     }else{
     camera = new THREE.OrthographicCamera (-40,40,20,-20, 0, 2000);
     camera.position.set (0,0,450);
     camera.up.set (0,0,1);
     camera.lookAt (new THREE.Vector3(0,0,0));
+    var conx = 1;
+    var cony = 0;
     }
     scene.add( camera );
 
@@ -341,7 +369,7 @@ function setCamera() {
     controls.maxDistance = 0.3 * 100;
     controls.noKey = true;
     controls.enabled = false;
-    controls.target.set( 1, 0, 0);
+    controls.target.set( conx, cony, 0);
     controls.update();
 
 }
@@ -583,6 +611,7 @@ function init() {
                 height : Math.abs(ground_up_point.y - ground_click_point.y),
                 depth : 1.0,
                 yaw : 0,
+                id : "",
                 org:original = {
                     x : (ground_up_point.x + ground_click_point.x)/2,
                     y : -(ground_up_point.y + ground_click_point.y)/2,
@@ -608,6 +637,7 @@ function init() {
                 height : copy_bbox.height,
                 depth : copy_bbox.depth,
                 yaw : copy_bbox.yaw,
+                id : "",
                 org:original = {
                     x : (ground_up_point.x + ground_click_point.x)/2,
                     y : -(ground_up_point.y + ground_click_point.y)/2,
@@ -616,6 +646,7 @@ function init() {
                     height : copy_bbox.height,
                     depth : copy_bbox.depth,
                     yaw : copy_bbox.yaw,
+                    id:"",
                     }
             };
             if(bboxes.exists(bboxes.getTargetIndex(), "PCD")==true){
@@ -630,12 +661,19 @@ function init() {
     }}
     }
     gui.add(parameters, 'save').name("Save");
+    if(labelTool.cameraNames.length==5){
+    gui.add(parameters, 'rightCamera').name("RightCamera");
+    gui.add(parameters, 'leftCamera').name("LeftCamera");
+    }
     gui.add(parameters, 'bird_view').name("BirdView");
     gui.add(parameters, 'camera_view').name("CameraView");
     var ImageCheck = gui.add(parameters, 'image_checkbox').name("Image").listen();
     //gui.add(parameters,'result').name("result");
-
-    readYAMLFile(labelTool.workBlob + "/calibration.yml");
+    if(labelTool.cameraNames.length==5){
+        readYAMLFile(labelTool.workBlob + "/calibration" + labelTool.cameraNames[labelTool.curCamera] + ".yml");}
+    else{
+        readYAMLFile(labelTool.workBlob + "/calibration.yml");
+    }
     data_load(parameters);
     gui.open();
     //HoldCheck.onChange(function(value){labelTool.hold_flag = value;})

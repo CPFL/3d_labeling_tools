@@ -9,7 +9,7 @@ function request(options) {
 	switch (options.url) {
 	    case "/labels/":
 		var responseDict = {
-		    blob: "input",
+		    blob: "input_ladybug",
 		    progress: 102
 		};
 		var res = {responseText: JSON.stringify([responseDict])};
@@ -17,8 +17,8 @@ function request(options) {
 		break;
 	    case "/label/image_size/":
 		var responseDict = {
-		    width: 800,
-		    height: 600
+		    width: 416,
+		    height: 515
 		};
 		var res = {responseText: JSON.stringify(responseDict)};
 		options.complete(res);
@@ -30,11 +30,18 @@ function request(options) {
 		var res = {responseText: JSON.stringify(responseDict)};
 		options.complete(res);
 		break;
+		case "/label/camera_names/":
+		var responseDict = {
+		    camera_names: ["1", "2","3","4","5"]
+		};
+		var res = {responseText: JSON.stringify(responseDict)};
+		options.complete(res);
+		break;
 	    case "/label/annotations/":
 		var fileName = options.data["file_name"];
 		var res;
-		if (fileName in __labelData) {
-		    res = JSON.parse(__labelData[fileName]);
+		if (fileName+options.data["camera_name"] in __labelData) {
+		    res = JSON.parse(__labelData[fileName+options.data["camera_name"]]);
 		} else {
 		    res = parseAnnotationFile(fileName);
 		}
@@ -45,7 +52,7 @@ function request(options) {
 	switch (options.url) {
 	    case "/label/annotations/":
 		/* if (options.data["label_id"] == 2) {*/
-		__labelData[options.data["file_name"]] = options.data["annotations"];
+		__labelData[options.data["file_name"]+options.data["camera_name"]] = options.data["annotations"];
 		options.success("None");
 		/* } else {
 		   options.error();
@@ -58,7 +65,11 @@ function request(options) {
 function parseAnnotationFile(fileName) {
     var rawFile = new XMLHttpRequest();
     var res = [];
-    rawFile.open("GET", labelTool.workBlob + '/Annotations/' + fileName, false);
+	if(labelTool.cameraNames.length==5){
+	       rawFile.open("GET", labelTool.workBlob + '/Annotations' + labelTool.cameraNames[labelTool.curCamera] + '/' + fileName, false);}
+	else{
+	       rawFile.open("GET", labelTool.workBlob + '/Annotations/' + fileName, false);
+	}
     rawFile.onreadystatechange = function (){
 	if(rawFile.readyState === 4){
 	    if(rawFile.status === 200 || rawFile.status == 0) {
@@ -81,7 +92,8 @@ function parseAnnotationFile(fileName) {
 				  x: str[11],
 				  y: str[12],
 				  z: str[13],
-				  rotation_y: str[14]});
+				  rotation_y: str[14],
+				  id: str[15]});
 		    }
 		}
 	    }

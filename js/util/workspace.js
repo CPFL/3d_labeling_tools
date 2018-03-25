@@ -12,6 +12,8 @@ class WorkSpace {
 	this.labelId = -1;
 	this.workBlob = ''; // Base url of blob
 	this.curFile = 0; // Base name of current file
+	this.curCamera = -1;
+	this.cameraList = [];
 	this.fileList = [];
 	this.dataType = dataType; // JPEG or PCD
 	this.originalSize = [0, 0]; // Original size of jpeg image
@@ -46,9 +48,11 @@ class WorkSpace {
 
     // Get informations of workspace (call this for initialization)
     getWorkFiles() {
-	this.workBlob = "input"; // "https://devrosbag.blob.core.windows.net/labeltool/3d_label_test";
+	this.workBlob = "input_ladybug"; // "https://devrosbag.blob.core.windows.net/labeltool/3d_label_test";
 	this.curFile = 1; // For test (please make labeling tool start with frame:1)
 	this.fileList = ["000000", "000001"]
+	this.cameraList = ["1", "2", "3", "4", "5"]
+	this.curCamera = 1;
 	this.results = new Array(this.fileList.length);
 	this.originalSize[0] = 800;
 	this.originalSize[1] = 600;
@@ -74,7 +78,11 @@ class WorkSpace {
 	    var res = [];
 	    var fileName = this.fileList[this.curFile] + ".txt";
 	    var rawFile = new XMLHttpRequest();
-	    rawFile.open("GET", this.workBlob + '/Annotations/' + fileName, false);
+	    if(this.cameraList.length==5){
+	       rawFile.open("GET", this.workBlob + '/Annotations' + this.cameraList[this.curCamera] + '/' + fileName, false);}
+	   else{
+	       rawFile.open("GET", this.workBlob + '/Annotations/' + fileName, false);
+	   }
 	    rawFile.onreadystatechange = function (){
 		if(rawFile.readyState === 4){
 		    if(rawFile.status === 200 || rawFile.status == 0) {
@@ -97,7 +105,8 @@ class WorkSpace {
 					  x: str[11],
 					  y: str[12],
 					  z: str[13],
-					  rotation_y: str[14]});
+					  rotation_y: str[14],
+					  id:str[15]});
 			    }
 			}
 		    }
