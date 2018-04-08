@@ -25,10 +25,10 @@ var bird_view_flag = true;
 var move_flag = false;
 var cls = 0;
 var c_flag = false;
-var copy_bbox_index;
 var r_flag = false;
 var copy_box;
-var rotation_bbox_index;
+var rotation_bbox_index=-1;
+var copy_bbox_index=-1;
 
 var parameters = {
     save : function() {
@@ -404,11 +404,11 @@ function animate() {
     else{
         bb1[i].close();
     }
-    if(i==copy_bbox_index && c_flag==true){
+    if(i==labelTool.bbox_index.lastIndexOf(copy_bbox_index.toString()) && c_flag==true){
         labelTool.cube_array[i].material.color.setHex( 0xffff00 );
     }
     else if(bb1[i].closed==false){
-        if(i==rotation_bbox_index && r_flag==true){
+        if(i==labelTool.bbox_index.lastIndexOf(rotation_bbox_index.toString()) && r_flag==true){
             labelTool.cube_array[i].material.color.setHex( 0xff8000 );
         }
         else{
