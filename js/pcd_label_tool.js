@@ -277,6 +277,7 @@ function addbbox_gui(bbox,num){
         gui.removeFolder('BoundingBox'+String(num));
         labelTool.cube_array[index].visible=false;
         bboxes.remove(num,"PCD");
+        labelTool.changeFrame(labelTool.curFile)
         //bboxes.selectEmpty();
     }
     };
@@ -503,6 +504,7 @@ function init() {
                 num1 = labelTool.bbox_index[click_object_index];
                 gui.removeFolder('BoundingBox'+String(num1));
                 bboxes.remove(num1,"PCD");
+                labelTool.changeFrame(labelTool.curFile)
             }
         }else if(bird_view_flag==true){
             ground_plane_array = [];
